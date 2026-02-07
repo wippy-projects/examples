@@ -187,3 +187,18 @@ process.send(reply_to, "response_topic", { ... })
 | Data access | Method chain: `:payload():data()`          | Dot notation: `evt.data`                     |
 | Routing     | Point-to-point (specific PID)              | Pub/sub (all subscribers)                    |
 | Use case    | Request-reply between handler and process  | Broadcast notifications (delivery, email)    |
+
+---
+
+## Q: Why does `msg:payload()` work without `:data()` in spawned process context?
+
+**Answer:** It doesn't — it silently fails. In the `03-ping-pong` example, `msg:payload().sender` returned `nil`
+instead of the PID string, causing `process.send(nil, ...)` to silently drop messages. The pinger would timeout waiting
+for pong, then send "done" — making it *look* like things worked (both processes exited) but the actual ping/pong
+exchange never happened.
+
+**Diagnosis:** The exit order revealed the bug. With the broken code, ponger exited first (idle, then got "done").
+After fixing to `msg:payload():data()`, pinger exited first (completed 5 rounds), confirming the exchange worked.
+
+**Rule:** Always use `msg:payload():data()` in **every** context — `function.lua`, `process.lua`, spawned processes.
+There are no exceptions.

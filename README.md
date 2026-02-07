@@ -1,82 +1,81 @@
 # Wippy Examples
 
-Three example projects demonstrating Wippy runtime patterns.
+Learn Wippy step by step — from hello world to a registry-driven job scheduler.
 
-## Examples
+## Core Examples
 
-| Project | Description | Patterns |
-|---------|-------------|----------|
-| [shop/](shop/) | Shopping cart API with per-user actor processes | HTTP endpoints, process spawn, message passing, event bus |
-| [http-async-task/](http-async-task/) | Background task via coroutine | HTTP endpoint, `coroutine.spawn` |
-| [http-spawn/](http-spawn/) | Background task via dedicated process | HTTP endpoint, `process.spawn` |
-
-## Prerequisites
-
-Install the Wippy CLI: https://wippy.ai
-
-## Running
-
-Each example is a standalone project. `cd` into the directory and run:
+Each example is self-contained. `cd` into the project directory first.
 
 ```bash
-wippy run
+cd examples/<name>
+wippy run -x app:<entry>   # run a specific process
+wippy run                   # start all auto-started services
 ```
 
-The server starts on `:8080` by default.
+| #  | Example                                 | Concepts                                                 | Run command                   |
+|----|-----------------------------------------|----------------------------------------------------------|-------------------------------|
+| 01 | [hello-world](01-hello-world)           | Process, terminal I/O                                    | `wippy run -x app:hello`      |
+| 02 | [func-call](02-func-call)               | `funcs.call()`, functions as compute units               | `wippy run -x app:cli`        |
+| 03 | [ping-pong](03-ping-pong)               | `process.service`, `process.registry`, message exchange  | `wippy run`                   |
+| 04 | [worker-pool](04-worker-pool)           | Channels, `coroutine.spawn`, fan-out/fan-in              | `wippy run -x app:pool`       |
+| 05 | [supervision](05-supervision)           | Let it crash, manual supervisor, restart with backoff    | `wippy run -x app:supervisor` |
+| 06 | [registry-dynamic](06-registry-dynamic) | `registry.snapshot()`, `changes:create/delete/apply`     | `wippy run -x app:cli`        |
+| 07 | [event-bus](07-event-bus)               | `events.send()`, `events.subscribe()`, pub/sub           | `wippy run`                   |
+| 08 | [pipeline](08-pipeline)                 | Process chain, 4-stage data flow, `json.encode/decode`   | `wippy run -x app:cli`        |
+| 09 | [key-value](09-key-value)               | Process as server, request/reply, `process.inbox()`      | `wippy run -x app:cli`        |
+| 10 | [chat-room](10-chat-room)               | **All combined**: processes, messages, events, registry  | `wippy run -x app:cli`        |
+| 11 | [crontab](11-crontab)                   | `time.after()`, timer loops, one process per job         | `wippy run`                   |
+| 12 | [crontab-registry](12-crontab-registry) | Registry-driven discovery, `funcs.call()`, dynamic spawn | `wippy run`                   |
 
-## Testing
+## HTTP Examples
 
-### shop
+These start an HTTP server. Run with `wippy run` and test with `curl`.
 
-```bash
-# List products
-curl http://localhost:8080/api/products
+| Example                            | Concepts                                              | Port  |
+|------------------------------------|-------------------------------------------------------|-------|
+| [http-async-task](http-async-task) | HTTP + `coroutine.spawn` for background work          | :8080 |
+| [http-spawn](http-spawn)           | HTTP + `process.spawn` per task                       | :8080 |
+| [shop](shop)                       | Full app: cart per user, registry products, event bus | :8080 |
 
-# Add item to cart
-curl -X POST http://localhost:8080/api/cart/alice/items \
-  -H "Content-Type: application/json" \
-  -d '{"sku":"LAPTOP-001","quantity":1}'
+## Learning Path
 
-# View cart
-curl http://localhost:8080/api/cart/alice
-
-# Checkout (triggers delivery + email events)
-curl -X POST http://localhost:8080/api/cart/alice/checkout
-
-# Full test script is in shop/test.http
+```
+01 hello-world         — "Everything is a process"
+       ↓
+02 func-call           — "Functions are stateless calls between processes"
+       ↓
+03 ping-pong           — "Services discover each other via registry"
+       ↓
+04 worker-pool         — "Channels coordinate coroutines within a process"
+       ↓
+05 supervision         — "Let it crash. Supervisors restart."
+       ↓
+06 registry-dynamic    — "Registry is the source of truth. Extend at runtime."
+       ↓
+07 event-bus           — "Events decouple publishers from subscribers"
+       ↓
+08 pipeline            — "Chain processes into data pipelines"
+       ↓
+09 key-value           — "A process IS a server. State + inbox = service."
+       ↓
+10 chat-room           — "Combine everything into a real system"
+       ↓
+11 crontab             — "Timer loops: one process per periodic job"
+       ↓
+12 crontab-registry    — "Registry-driven config: data defines behavior"
 ```
 
-### http-async-task
+## Key Patterns by Example
 
-```bash
-curl -X POST http://localhost:8080/api/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"name":"my-task","duration":3}'
-```
-
-### http-spawn
-
-```bash
-curl -X POST http://localhost:8080/api/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"name":"my-task","duration":3}'
-```
-
-## Linting
-
-```bash
-wippy lint                # Errors and warnings
-wippy lint --level hint   # All diagnostics
-```
-
-## Other Useful Commands
-
-```bash
-wippy registry list       # List all registry entries
-wippy update              # Regenerate wippy.lock
-wippy install             # Install dependencies
-```
-
-## Troubleshooting
-
-See [QA.md](QA.md) for common issues and solutions.
+| Pattern                               | Examples            |
+|---------------------------------------|---------------------|
+| `process.spawn()`                     | 05, 08, 10, 12      |
+| `process.service` (auto-start)        | 03, 07, 09, 11, 12  |
+| `process.send()` / `inbox()`          | 03, 08, 09, 10      |
+| `process.registry`                    | 03, 09, 10          |
+| `channel.select` + `time.after()`     | 08, 09, 10, 11, 12  |
+| `channel.new()` + `coroutine.spawn()` | 04, http-async-task |
+| `funcs.call()`                        | 02, 12              |
+| `events.send()` / `subscribe()`       | 07, 10              |
+| `registry.find()` / `snapshot()`      | 06, 10, 12          |
+| `json.encode()` / `decode()`          | 08                  |
