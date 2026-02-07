@@ -37,7 +37,8 @@ local function main(user_id)
         else
             local msg = r.value
             local topic = msg:topic()
-            local data = msg:payload()
+            local data = msg:payload():data()
+            local sender = msg:from()
 
             if topic == "add_item" then
                 local sku = data.sku
@@ -67,8 +68,8 @@ local function main(user_id)
                     total = total + (item.price * item.quantity)
                 end
 
-                -- Reply back to the requesting process
-                local reply_to = data.reply_to
+                -- Reply back to the requesting process using sender PID
+                local reply_to = tostring(data.reply_to or sender)
                 process.send(reply_to, "cart_response", {
                     user_id = user_id,
                     items = item_list,
@@ -84,9 +85,10 @@ local function main(user_id)
                     total = total + (item.price * item.quantity)
                 end
 
+                local reply_to = tostring(data.reply_to or sender)
+
                 if #item_list == 0 then
                     -- Reply empty cart error
-                    local reply_to = data.reply_to
                     process.send(reply_to, "checkout_response", {
                         success = false,
                         error = "Cart is empty"
@@ -109,7 +111,6 @@ local function main(user_id)
                     })
 
                     -- Reply success
-                    local reply_to = data.reply_to
                     process.send(reply_to, "checkout_response", {
                         success = true,
                         order = order

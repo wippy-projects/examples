@@ -8,11 +8,13 @@ local function handler()
 
     local body, err = req:body_json()
     if err then
-        return res:set_status(400):write_json({ error = "Invalid JSON" })
+        res:set_status(400)
+        return res:write_json({ error = "Invalid JSON" })
     end
 
     if not body.name or type(body.name) ~= "string" or #body.name == 0 then
-        return res:set_status(400):write_json({ error = "Field 'name' is required" })
+        res:set_status(400)
+        return res:write_json({ error = "Field 'name' is required" })
     end
 
     local task = {
@@ -28,7 +30,8 @@ local function handler()
     logger:info("Task process spawned", { pid = pid, name = task.name })
 
     -- Respond immediately — the process works in the background
-    res:set_status(202):write_json({
+    res:set_status(202)
+    res:write_json({
         pid = pid,
         name = task.name,
         status = "spawned",

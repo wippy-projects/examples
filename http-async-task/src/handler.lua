@@ -9,11 +9,13 @@ local function handler()
 
     local body, err = req:body_json()
     if err then
-        return res:set_status(400):write_json({ error = "Invalid JSON" })
+        res:set_status(400)
+        return res:write_json({ error = "Invalid JSON" })
     end
 
     if not body.name or type(body.name) ~= "string" or #body.name == 0 then
-        return res:set_status(400):write_json({ error = "Field 'name' is required (non-empty string)" })
+        res:set_status(400)
+        return res:write_json({ error = "Field 'name' is required (non-empty string)" })
     end
 
     local task = body
@@ -41,7 +43,8 @@ local function handler()
     end)
 
     -- Respond immediately — the coroutine continues in the background
-    res:set_status(202):write_json({
+    res:set_status(202)
+    res:write_json({
         task_id = task_id,
         name = task.name,
         status = "accepted",
