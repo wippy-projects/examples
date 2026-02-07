@@ -1,0 +1,16 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: pool
+    kind: process.lua
+    source: file://pool.lua
+    method: main
+    modules:
+      - io
+      - time

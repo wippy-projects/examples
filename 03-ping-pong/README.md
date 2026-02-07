@@ -32,13 +32,13 @@ ping/pong loop. Both run forever until the runtime is terminated.
 
 ## Registry Entries
 
-| Entry                | Kind              | Purpose                               |
-|----------------------|-------------------|---------------------------------------|
-| `app:processes`      | `process.host`    | Worker pool for both services         |
-| `app:ponger_process` | `process.lua`     | Ponger process definition             |
-| `app:ponger`         | `process.service` | Supervised ponger (auto-start)        |
-| `app:pinger_process` | `process.lua`     | Pinger process definition             |
-| `app:pinger`         | `process.service` | Supervised pinger (auto-start)        |
+| Entry                | Kind              | Purpose                        |
+|----------------------|-------------------|--------------------------------|
+| `app:processes`      | `process.host`    | Worker pool for both services  |
+| `app:ponger_process` | `process.lua`     | Ponger process definition      |
+| `app:ponger`         | `process.service` | Supervised ponger (auto-start) |
+| `app:pinger_process` | `process.lua`     | Pinger process definition      |
+| `app:pinger`         | `process.service` | Supervised pinger (auto-start) |
 
 ## Running
 
@@ -72,13 +72,13 @@ Pinger                              Ponger
   │                                   │
   │  send(ponger, "ping", {round=1})  │
   │ ─────────────────────────────────▶│
-  │                 send(from, "pong") │
+  │                send(from, "pong") │
   │◀───────────────────────────────── │
   │  sleep 1s                         │
   │                                   │
   │  send(ponger, "ping", {round=2})  │
   │ ─────────────────────────────────▶│
-  │                 send(from, "pong") │
+  │                send(from, "pong") │
   │◀───────────────────────────────── │
   │  ... repeats forever ...          │
 ```
