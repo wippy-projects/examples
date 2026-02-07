@@ -29,7 +29,9 @@ wippy run                   # start all auto-started services
 | 13 | [echo-service](13-echo-service)         | `spawn_monitored`, coroutines, workers, request/reply    | `wippy run -x app:cli`        |
 | 14 | [task-queue](14-task-queue)             | Queue, SQLite, migrations, concurrent workers            | `wippy run`                   |
 | 15 | [env-variables](15-env-variables)       | `env.get/set`, storage backends, router chain, defaults  | `wippy run -x app:cli`        |
-| 18 | [mass-spawn](18-mass-spawn)             | 1000+ processes, `spawn_monitored`, fan-in, throughput   | `wippy run`                   |
+| 16 | [metrics](16-metrics)                   | Counters, gauges, histograms, `system.memory.stats()`    | `wippy run`                   |
+| 18 | [mass-spawn](18-mass-spawn)             | 10000 processes, `spawn_monitored`, fan-in, throughput   | `wippy run`                   |
+| 19 | [llm-agent](19-llm-agent)               | `wippy/llm`, prompt builder, multi-turn, env config      | `wippy run -x app:cli`        |
 
 ## HTTP Examples
 
@@ -41,6 +43,7 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
 | [http-async-task](http-async-task)   | HTTP + `coroutine.spawn` for background work          | :8080 |
 | [http-spawn](http-spawn)             | HTTP + `process.spawn` per task                       | :8080 |
 | [shop](shop)                         | Full app: cart per user, registry products, event bus | :8080 |
+| [treesitter](17-treesitter)          | Tree-sitter parsing, call graphs, Jet templates, views | :8080 |
 
 ## Learning Path
 
@@ -75,7 +78,13 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
        ↓
 15 env-variables       — "Configure apps: storage chain, defaults, runtime overrides"
        ↓
-18 mass-spawn          — "1000 processes? Lightweight actors with random ticking."
+16 metrics             — "Counters, gauges, histograms: instrument everything"
+       ↓
+17 treesitter          — "Parse code into ASTs, extract call graphs, render with views"
+       ↓
+18 mass-spawn          — "10000 processes? Lightweight actors with random ticking."
+       ↓
+19 llm-agent            — "Call LLMs with prompt builder and env-based config"
 ```
 
 ## Key Patterns by Example
@@ -100,3 +109,10 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
 | Mass `spawn_monitored` + fan-in collect           | 18                         |
 | `time.after()` random ticking + `time.ticker`     | 18                         |
 | `env.variable` for config + `process.host` tuning | 18                         |
+| `metrics.counter/gauge/histogram`                 | 16                         |
+| `system.memory.stats()` / `system.runtime`        | 16                         |
+| `treesitter.parse()` / `treesitter.query()`       | 17                         |
+| `wippy/views` + Jet templates                     | 17                         |
+| `llm.generate()` / `prompt.new()`                | 19                         |
+| `ns.dependency` (wippy/llm component)            | 19                         |
+| `registry.find()` for language discovery          | 17                         |
