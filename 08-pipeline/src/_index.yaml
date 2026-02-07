@@ -1,0 +1,51 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  - name: parser
+    kind: process.lua
+    source: file://parser.lua
+    method: main
+    modules:
+      - logger
+
+  - name: transformer
+    kind: process.lua
+    source: file://transformer.lua
+    method: main
+    modules:
+      - logger
+
+  - name: formatter
+    kind: process.lua
+    source: file://formatter.lua
+    method: main
+    modules:
+      - logger
+      - json
+
+  - name: aggregator
+    kind: process.lua
+    source: file://aggregator.lua
+    method: main
+    modules:
+      - logger
+
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - time
+      - json
