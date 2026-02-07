@@ -8,8 +8,20 @@ entries:
       auto_start: true
 
   - name: hello
+    meta:
+      command:
+        name: hello
+        short: Run hello example
+#      options:
+#        retry:
+#          max_attempts: 3
+#          initial_delay: 100
+#          backoff_factor: 2.0
     kind: process.lua
     source: file://hello.lua
     method: main
+#    pool: # See https://home.wj.wippy.ai/en/concepts/functions
+#      type: lazy
+#      max_size: 16
     modules:
       - io

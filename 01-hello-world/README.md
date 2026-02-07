@@ -38,7 +38,7 @@ the process and exits when it returns.
 ```bash
 cd examples/01-hello-world
 wippy init
-wippy run -x app:hello
+wippy run -x hello
 ```
 
 **Output:**

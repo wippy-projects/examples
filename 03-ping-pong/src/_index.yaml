@@ -4,6 +4,10 @@ namespace: app
 entries:
   - name: processes
     kind: process.host
+    #    host:
+    #      workers: 8 # Worker goroutines, default NumCPU
+    #      queue_size: 1024 # Global queue capacity
+    #      local_queue_size: 256 # Per-worker local deque size
     lifecycle:
       auto_start: true
 
@@ -21,6 +25,9 @@ entries:
     host: app:processes
     lifecycle:
       auto_start: true
+  #      restart:
+  #        max_attempts: 5
+  #        delay: 1s
 
   # Pinger: sends "ping", waits for "pong"
   - name: pinger_process
