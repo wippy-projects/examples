@@ -1,0 +1,35 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  - name: kv_server
+    kind: process.lua
+    source: file://kv_server.lua
+    method: main
+    modules:
+      - logger
+
+  - name: kv_server.service
+    kind: process.service
+    process: app:kv_server
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - time

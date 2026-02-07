@@ -1,0 +1,49 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # Room process — spawned dynamically per room
+  - name: room
+    kind: process.lua
+    source: file://room.lua
+    method: main
+    modules:
+      - logger
+      - events
+      - registry
+
+  # Notification service — watches all chat events
+  - name: notifications_process
+    kind: process.lua
+    source: file://notifications.lua
+    method: main
+    modules:
+      - logger
+      - events
+
+  - name: notifications
+    kind: process.service
+    process: app:notifications_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # CLI simulator
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - time
+      - registry
