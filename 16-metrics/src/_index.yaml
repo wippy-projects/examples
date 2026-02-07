@@ -1,0 +1,76 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Infrastructure ─────────────────────────────────────────
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  - name: gateway
+    kind: http.service
+    addr: ":8080"
+    lifecycle:
+      auto_start: true
+
+  - name: router
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /api
+
+  # ── HTTP Handlers ──────────────────────────────────────────
+
+  - name: create_order
+    kind: function.lua
+    source: file://handlers/create_order.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - metrics
+      - time
+
+  - name: create_order.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: POST
+    path: /orders
+    func: app:create_order
+
+  - name: get_stats
+    kind: function.lua
+    source: file://handlers/get_stats.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - metrics
+      - system
+
+  - name: get_stats.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /stats
+    func: app:get_stats
+
+  - name: health
+    kind: function.lua
+    source: file://handlers/health.lua
+    method: handler
+    modules:
+      - http
+      - json
+
+  - name: health.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /health
+    func: app:health

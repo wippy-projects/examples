@@ -1,0 +1,49 @@
+### Health check
+GET http://localhost:8080/api/health
+
+### Create a laptop order
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+
+{
+  "item": "laptop",
+  "amount": 2,
+  "price": 999.99
+}
+
+### Create a keyboard order
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+
+{
+  "item": "keyboard",
+  "amount": 5,
+  "price": 49.99
+}
+
+### Create a mouse order (default amount=1, price=9.99)
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+
+{
+  "item": "mouse"
+}
+
+### --- Error cases ---
+
+### Missing item field
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+
+{
+  "price": 100
+}
+
+### Invalid JSON
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+
+not-json
+
+### Runtime statistics (memory, goroutines)
+GET http://localhost:8080/api/stats
