@@ -39,6 +39,7 @@ Workers run as coroutines inside the same process. They share no state — all c
 
 ```bash
 cd examples/04-worker-pool
+wippy init
 wippy run -x app:pool
 ```
 

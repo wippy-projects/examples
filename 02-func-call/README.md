@@ -47,6 +47,7 @@ call, get result, done.
 
 ```bash
 cd examples/02-func-call
+wippy init
 wippy run -x app:cli
 ```
 

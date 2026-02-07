@@ -44,6 +44,7 @@ ping/pong loop. Both run forever until the runtime is terminated.
 
 ```bash
 cd examples/03-ping-pong
+wippy init
 wippy run
 ```
 

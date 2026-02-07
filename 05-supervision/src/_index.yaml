@@ -1,0 +1,29 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  - name: unstable_worker
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules:
+      - logger
+      - time
+
+  - name: supervisor
+    kind: process.lua
+    source: file://supervisor.lua
+    method: main
+    modules:
+      - io
+      - time
