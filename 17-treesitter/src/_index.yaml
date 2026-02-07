@@ -16,6 +16,45 @@ entries:
       server: app:gateway
     prefix: /
 
+  # ── Views Dependency ─────────────────────────────────────────
+
+  - name: views
+    kind: ns.dependency
+    component: wippy/views
+    version: "*"
+    parameters:
+      - name: api_router
+        value: app:router
+
+  # ── Templates ────────────────────────────────────────────────
+
+  - name: templates
+    kind: template.set
+
+  - name: layout
+    kind: template.jet
+    set: app:templates
+    source: file://templates/layout.jet
+
+  - name: viewer
+    kind: template.jet
+    set: app:templates
+    source: file://templates/page.jet
+    meta:
+      type: view.page
+      title: "Tree-sitter Call Graph"
+      path: /
+    data_func: app:page_data
+
+  # ── Data Functions ───────────────────────────────────────────
+
+  - name: page_data
+    kind: function.lua
+    source: file://data/page_data.lua
+    method: handler
+    imports:
+      parser: app:parser
+
   # ── Filesystem Volumes ─────────────────────────────────────
 
   - name: php_samples
@@ -54,6 +93,8 @@ entries:
     method: handler
     modules:
       - http
+    imports:
+      renderer: wippy.views:renderer
 
   - name: page.endpoint
     kind: http.endpoint

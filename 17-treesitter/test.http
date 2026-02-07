@@ -1,4 +1,4 @@
-### HTML viewer page
+### HTML viewer page (rendered via Jet template)
 GET http://localhost:8080/
 
 ### List registered languages (from registry)
@@ -14,10 +14,10 @@ GET http://localhost:8080/api/graph?lang=python
 GET http://localhost:8080/api/graph?lang=php&file=Router.php
 
 ### Per-file structure graph
-GET http://localhost:8080/api/graph?lang=php&file=UserController.php&type=structure
+GET http://localhost:8080/api/graph?lang=php&file=Controllers/UserController.php&type=structure
 
 ### Per-file external calls graph
-GET http://localhost:8080/api/graph?lang=python&file=pipeline.py&type=external
+GET http://localhost:8080/api/graph?lang=python&file=core/pipeline.py&type=external
 
 ### List PHP source files
 GET http://localhost:8080/api/files?lang=php

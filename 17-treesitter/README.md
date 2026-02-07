@@ -6,13 +6,26 @@ definitions and call relationships, and render interactive call graphs using Gra
 Languages are **registry-driven** — sample directories are discovered via `meta.sample` metadata on
 `fs.directory` entries. To add a new language, add an entry to `_index.yaml` with the right metadata.
 
+The HTML page is rendered server-side using **Jet templates** via the `wippy/views` module, with
+template inheritance (layout + page) and a data function that pre-populates languages.
+
 ## Architecture
 
 ```
-Browser → GET /              → HTML page with viz.js (client-side Graphviz)
+Browser → GET /              → renderer.render() → Jet template → HTML page
        → GET /api/languages  → registry.find() → JSON language list
        → GET /api/graph      → tree-sitter parse → DOT graph text
        → GET /api/files      → fs.directory scan → JSON file list
+
+Templates:
+  layout.jet   → base HTML structure (title, styles, body, scripts yield points)
+  page.jet     → extends layout, contains the viewer UI + JS
+
+Data flow:
+  renderer.render("app:viewer") → calls data_func (page_data.lua)
+    → parser.list_languages() → {title, languages}
+    → Jet template receives data.title, data.languages
+    → {{ range data.languages }} pre-populates <select> and JS array
 
 parser.lua (library):
   1. registry.find({["meta.sample_lang"] = lang}) → resolve volume ID + extension
@@ -60,11 +73,16 @@ Clicking a file in the sidebar shows three graph views:
 └── src/
     ├── _index.yaml
     ├── parser.lua                  # Shared library: registry + extraction + DOT
+    ├── templates/
+    │   ├── layout.jet              # Base HTML layout (yield points)
+    │   └── page.jet                # Viewer page (extends layout)
+    ├── data/
+    │   └── page_data.lua           # Data function: loads languages
     ├── samples/
     │   ├── php/                    # 10 PHP files (MVC app)
     │   └── python/                 # 10 Python files (data pipeline)
     └── handlers/
-        ├── page.lua                # GET / → HTML viewer
+        ├── page.lua                # GET / → renderer.render() → HTML
         ├── graph.lua               # GET /api/graph → DOT
         ├── files.lua               # GET /api/files → JSON
         └── languages.lua           # GET /api/languages → JSON
@@ -74,6 +92,7 @@ Clicking a file in the sidebar shows three graph views:
 
 ```bash
 cd examples/17-treesitter
+wippy init
 wippy run
 # Open http://localhost:8080 in a browser
 ```
@@ -81,6 +100,9 @@ wippy run
 ## Testing
 
 ```bash
+# HTML viewer (rendered via Jet template)
+curl http://localhost:8080/
+
 # List registered languages
 curl http://localhost:8080/api/languages
 
@@ -92,9 +114,42 @@ curl http://localhost:8080/api/graph?lang=php
 
 # Per-file graphs
 curl "http://localhost:8080/api/graph?lang=php&file=Router.php"
-curl "http://localhost:8080/api/graph?lang=php&file=UserController.php&type=structure"
-curl "http://localhost:8080/api/graph?lang=python&file=pipeline.py&type=external"
+curl "http://localhost:8080/api/graph?lang=php&file=Controllers/UserController.php&type=structure"
+curl "http://localhost:8080/api/graph?lang=python&file=core/pipeline.py&type=external"
 ```
+
+## Views Module
+
+This example uses `wippy/views` for server-side HTML rendering:
+
+| Entry       | Kind            | Purpose                                                   |
+|-------------|-----------------|-----------------------------------------------------------|
+| `views`     | `ns.dependency` | Installs the views component (`wippy/views`)              |
+| `templates` | `template.set`  | Groups Jet templates together                             |
+| `layout`    | `template.jet`  | Base HTML layout with yield points                        |
+| `viewer`    | `template.jet`  | Page template with `data_func` and `meta.type: view.page` |
+| `page_data` | `function.lua`  | Data function that loads languages for the template       |
+
+### Template Inheritance
+
+`layout.jet` defines yield points: `title()`, `styles()`, `body()`, `scripts()`.
+`page.jet` extends layout and fills each block with the viewer UI content.
+
+### Data Functions
+
+The `page_data` function receives a context with `params` and `query`, and returns data
+that becomes available in the template as `data.*`:
+
+```lua
+local function handler(context)
+    return {
+        title = "Tree-sitter Call Graph",
+        languages = parser.list_languages(),
+    }
+end
+```
+
+In the template: `{{ data.title }}`, `{{ range data.languages }}`.
 
 ## Registry Metadata
 
@@ -107,6 +162,10 @@ curl "http://localhost:8080/api/graph?lang=python&file=pipeline.py&type=external
 
 ## Key Concepts
 
+- **`wippy/views`** — views module with renderer, page registry, template engine
+- **`template.set`** + **`template.jet`** — Jet template system with inheritance
+- **`renderer.render(page_id, route_params, query_params)`** — renders a page with its data function
+- **`data_func`** — function called by renderer to load data for the template
 - **`registry.find({["meta.sample_lang"] = lang})`** — discover sample volumes by metadata
 - **`treesitter.parse(lang, code)`** — parse source code into a concrete syntax tree
 - **`treesitter.query(lang, pattern)`** — create S-expression pattern queries
@@ -118,6 +177,7 @@ curl "http://localhost:8080/api/graph?lang=python&file=pipeline.py&type=external
 
 ## Wippy Documentation
 
+- Views module: https://home.wj.wippy.ai/en/lua/web/views
 - Tree-sitter module: https://home.wj.wippy.ai/en/lua/text/treesitter
 - Filesystem module: https://home.wj.wippy.ai/en/lua/storage/filesystem
 - Registry module: https://home.wj.wippy.ai/en/lua/runtime/registry
