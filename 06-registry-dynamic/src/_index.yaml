@@ -1,0 +1,39 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  # Pre-registered tools with custom type
+  - name: tool.calculator
+    kind: registry.entry
+    meta:
+      type: tool
+      title: "Calculator"
+      description: "Performs basic math operations"
+
+  - name: tool.translator
+    kind: registry.entry
+    meta:
+      type: tool
+      title: "Translator"
+      description: "Translates text between languages"
+
+  - name: tool.summarizer
+    kind: registry.entry
+    meta:
+      type: tool
+      title: "Summarizer"
+      description: "Summarizes long text"
+
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - registry
+      - json
