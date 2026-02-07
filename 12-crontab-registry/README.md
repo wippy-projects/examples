@@ -66,6 +66,7 @@ discovers and runs it automatically.
 
 ```bash
 cd examples/12-crontab-registry
+wippy init
 wippy run
 # Watch logs — scheduler discovers jobs, spawns workers, functions return results
 # Ctrl+C to stop

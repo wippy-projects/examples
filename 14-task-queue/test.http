@@ -1,0 +1,99 @@
+### Create an uppercase task
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "action": "uppercase",
+  "data": {
+    "text": "hello world"
+  }
+}
+
+### Create a sum task
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "action": "sum",
+  "data": {
+    "numbers": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+}
+
+### Create a generic task (unknown action)
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "action": "cleanup",
+  "data": {
+    "target": "/tmp"
+  }
+}
+
+### Create multiple tasks rapidly (2 concurrent workers)
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "action": "uppercase",
+  "data": {
+    "text": "task alpha"
+  }
+}
+
+### Second concurrent task
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "action": "sum",
+  "data": {
+    "numbers": [
+      10,
+      20,
+      30
+    ]
+  }
+}
+
+### Third concurrent task
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "action": "uppercase",
+  "data": {
+    "text": "task gamma"
+  }
+}
+
+### List all tasks
+GET http://localhost:8080/tasks
+
+### List only completed tasks
+GET http://localhost:8080/tasks?status=completed
+
+### --- Error cases ---
+
+### Missing action field
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "data": {
+    "text": "no action"
+  }
+}
+
+### Invalid JSON
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+not-json

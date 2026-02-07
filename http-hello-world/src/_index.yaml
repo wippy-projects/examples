@@ -1,0 +1,34 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # HTTP server
+  - name: gateway
+    kind: http.service
+    addr: :8080
+    lifecycle:
+      auto_start: true
+
+  # Router
+  - name: api
+    kind: http.router
+    meta:
+      server: gateway
+    prefix: /
+
+  # Handler function
+  - name: hello
+    kind: function.lua
+    source: file://hello.lua
+    method: handler
+    modules:
+      - http
+
+  # Endpoint
+  - name: hello.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: GET
+    func: hello
+    path: /hello

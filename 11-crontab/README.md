@@ -46,6 +46,7 @@ Each job is a separate process with its own PID. All 4 share a single source fil
 
 ```bash
 cd examples/11-crontab
+wippy init
 wippy run
 # Watch logs — 4 processes fire at different intervals
 # Ctrl+C to stop (each job logs its run count)

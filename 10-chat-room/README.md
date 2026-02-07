@@ -62,6 +62,7 @@ Additionally, each room dynamically creates a `registry.entry` with `meta.type =
 
 ```bash
 cd examples/10-chat-room
+wippy init
 wippy run -x app:cli
 ```
 

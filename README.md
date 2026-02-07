@@ -26,16 +26,19 @@ wippy run                   # start all auto-started services
 | 10 | [chat-room](10-chat-room)               | **All combined**: processes, messages, events, registry  | `wippy run -x app:cli`        |
 | 11 | [crontab](11-crontab)                   | `time.after()`, timer loops, one process per job         | `wippy run`                   |
 | 12 | [crontab-registry](12-crontab-registry) | Registry-driven discovery, `funcs.call()`, dynamic spawn | `wippy run`                   |
+| 13 | [echo-service](13-echo-service)         | `spawn_monitored`, coroutines, workers, request/reply    | `wippy run -x app:cli`        |
+| 14 | [task-queue](14-task-queue)             | Queue, SQLite, migrations, concurrent workers            | `wippy run`                   |
 
 ## HTTP Examples
 
 These start an HTTP server. Run with `wippy run` and test with `curl`.
 
-| Example                            | Concepts                                              | Port  |
-|------------------------------------|-------------------------------------------------------|-------|
-| [http-async-task](http-async-task) | HTTP + `coroutine.spawn` for background work          | :8080 |
-| [http-spawn](http-spawn)           | HTTP + `process.spawn` per task                       | :8080 |
-| [shop](shop)                       | Full app: cart per user, registry products, event bus | :8080 |
+| Example                              | Concepts                                              | Port  |
+|--------------------------------------|-------------------------------------------------------|-------|
+| [http-hello-world](http-hello-world) | Minimal HTTP API: server, router, endpoint, function  | :8080 |
+| [http-async-task](http-async-task)   | HTTP + `coroutine.spawn` for background work          | :8080 |
+| [http-spawn](http-spawn)             | HTTP + `process.spawn` per task                       | :8080 |
+| [shop](shop)                         | Full app: cart per user, registry products, event bus | :8080 |
 
 ## Learning Path
 
@@ -63,19 +66,26 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
 11 crontab             — "Timer loops: one process per periodic job"
        ↓
 12 crontab-registry    — "Registry-driven config: data defines behavior"
+       ↓
+13 echo-service        — "Spawn a worker per request, monitor lifecycle"
+       ↓
+14 task-queue          — "Queues + database: async work with persistence"
 ```
 
 ## Key Patterns by Example
 
-| Pattern                               | Examples            |
-|---------------------------------------|---------------------|
-| `process.spawn()`                     | 05, 08, 10, 12      |
-| `process.service` (auto-start)        | 03, 07, 09, 11, 12  |
-| `process.send()` / `inbox()`          | 03, 08, 09, 10      |
-| `process.registry`                    | 03, 09, 10          |
-| `channel.select` + `time.after()`     | 08, 09, 10, 11, 12  |
-| `channel.new()` + `coroutine.spawn()` | 04, http-async-task |
-| `funcs.call()`                        | 02, 12              |
-| `events.send()` / `subscribe()`       | 07, 10              |
-| `registry.find()` / `snapshot()`      | 06, 10, 12          |
-| `json.encode()` / `decode()`          | 08                  |
+| Pattern                                 | Examples                |
+|-----------------------------------------|-------------------------|
+| `process.spawn()` / `spawn_monitored()` | 05, 08, 10, 12, 13      |
+| `process.service` (auto-start)          | 03, 07, 09, 11, 12, 13  |
+| `process.send()` / `inbox()`            | 03, 08, 09, 10, 13      |
+| `process.registry`                      | 03, 09, 10, 13          |
+| `channel.select` + `time.after()`       | 08, 09, 10, 11, 12, 13  |
+| `channel.new()` + `coroutine.spawn()`   | 04, 13, http-async-task |
+| `funcs.call()`                          | 02, 12                  |
+| `events.send()` / `subscribe()`         | 07, 10                  |
+| `registry.find()` / `snapshot()`        | 06, 10, 12              |
+| `json.encode()` / `decode()`            | 08, 14                  |
+| `queue.publish()` / `queue.consumer`    | 14                      |
+| `sql.get()` / `sql.builder`             | 14                      |
+| Migrations (`process.service` one-shot) | 14                      |

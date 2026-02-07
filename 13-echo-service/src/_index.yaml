@@ -1,0 +1,43 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - time
+
+  - name: relay
+    kind: process.lua
+    source: file://relay.lua
+    method: main
+    modules:
+      - logger
+      - time
+
+  - name: relay-service
+    kind: process.service
+    process: app:relay
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  - name: worker
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules:
+      - time
