@@ -1,0 +1,117 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Infrastructure ─────────────────────────────────────────
+
+  - name: gateway
+    kind: http.service
+    addr: ":8080"
+    lifecycle:
+      auto_start: true
+
+  - name: router
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /
+
+  # ── Filesystem Volumes ─────────────────────────────────────
+
+  - name: php_samples
+    kind: fs.directory
+    directory: ./src/samples/php
+    meta:
+      sample: "true"
+      sample_lang: php
+      sample_ext: php
+      sample_label: "PHP (MVC App)"
+
+  - name: python_samples
+    kind: fs.directory
+    directory: ./src/samples/python
+    meta:
+      sample: "true"
+      sample_lang: python
+      sample_ext: py
+      sample_label: "Python (Data Pipeline)"
+
+  # ── Shared Library ─────────────────────────────────────────
+
+  - name: parser
+    kind: library.lua
+    source: file://parser.lua
+    modules:
+      - treesitter
+      - fs
+      - registry
+
+  # ── HTTP Handlers ──────────────────────────────────────────
+
+  - name: page
+    kind: function.lua
+    source: file://handlers/page.lua
+    method: handler
+    modules:
+      - http
+
+  - name: page.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /
+    func: app:page
+
+  - name: graph
+    kind: function.lua
+    source: file://handlers/graph.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      parser: app:parser
+
+  - name: graph.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/graph
+    func: app:graph
+
+  - name: files
+    kind: function.lua
+    source: file://handlers/files.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      parser: app:parser
+
+  - name: files.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/files
+    func: app:files
+
+  # ── Languages API ────────────────────────────────────────
+
+  - name: languages
+    kind: function.lua
+    source: file://handlers/languages.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      parser: app:parser
+
+  - name: languages.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/languages
+    func: app:languages

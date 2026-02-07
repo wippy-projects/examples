@@ -1,0 +1,34 @@
+### HTML viewer page
+GET http://localhost:8080/
+
+### List registered languages (from registry)
+GET http://localhost:8080/api/languages
+
+### PHP call graph (DOT format)
+GET http://localhost:8080/api/graph?lang=php
+
+### Python call graph (DOT format)
+GET http://localhost:8080/api/graph?lang=python
+
+### Per-file call graph
+GET http://localhost:8080/api/graph?lang=php&file=Router.php
+
+### Per-file structure graph
+GET http://localhost:8080/api/graph?lang=php&file=UserController.php&type=structure
+
+### Per-file external calls graph
+GET http://localhost:8080/api/graph?lang=python&file=pipeline.py&type=external
+
+### List PHP source files
+GET http://localhost:8080/api/files?lang=php
+
+### List Python source files
+GET http://localhost:8080/api/files?lang=python
+
+### --- Error cases ---
+
+### Missing lang parameter
+GET http://localhost:8080/api/graph
+
+### Unknown language (resolved via registry)
+GET http://localhost:8080/api/graph?lang=ruby
