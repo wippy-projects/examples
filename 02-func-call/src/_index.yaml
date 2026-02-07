@@ -1,0 +1,34 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # A function that doubles a number
+  - name: double
+    kind: function.lua
+    source: file://double.lua
+    method: call
+
+  # A function that greets by name
+  - name: greet
+    kind: function.lua
+    source: file://greet.lua
+    method: call
+
+  # CLI entry point that calls both functions
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - funcs
