@@ -1,0 +1,39 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # Ponger: receives "ping", replies "pong"
+  - name: ponger_process
+    kind: process.lua
+    source: file://ponger.lua
+    method: main
+    modules:
+      - logger
+
+  - name: ponger
+    kind: process.service
+    process: app:ponger_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Pinger: sends "ping", waits for "pong"
+  - name: pinger_process
+    kind: process.lua
+    source: file://pinger.lua
+    method: main
+    modules:
+      - logger
+      - time
+
+  - name: pinger
+    kind: process.service
+    process: app:pinger_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
