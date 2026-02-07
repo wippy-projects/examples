@@ -1,0 +1,72 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # Heartbeat — every 1s
+  - name: heartbeat_process
+    kind: process.lua
+    source: file://jobs.lua
+    method: heartbeat
+    modules:
+      - logger
+      - time
+
+  - name: heartbeat
+    kind: process.service
+    process: app:heartbeat_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Cleanup — every 3s
+  - name: cleanup_process
+    kind: process.lua
+    source: file://jobs.lua
+    method: cleanup
+    modules:
+      - logger
+      - time
+
+  - name: cleanup
+    kind: process.service
+    process: app:cleanup_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Report — every 5s
+  - name: report_process
+    kind: process.lua
+    source: file://jobs.lua
+    method: report
+    modules:
+      - logger
+      - time
+
+  - name: report
+    kind: process.service
+    process: app:report_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Backup — every 7s
+  - name: backup_process
+    kind: process.lua
+    source: file://jobs.lua
+    method: backup
+    modules:
+      - logger
+      - time
+
+  - name: backup
+    kind: process.service
+    process: app:backup_process
+    host: app:processes
+    lifecycle:
+      auto_start: true

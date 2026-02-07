@@ -1,0 +1,68 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # Scheduler — discovers cron.job functions, spawns a worker for each
+  - name: scheduler_process
+    kind: process.lua
+    source: file://scheduler.lua
+    method: main
+    modules:
+      - logger
+      - time
+      - registry
+
+  - name: scheduler
+    kind: process.service
+    process: app:scheduler_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Generic worker — calls a function on a timer
+  - name: worker
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules:
+      - logger
+      - time
+      - funcs
+
+  # Job functions — each is callable via funcs.call() and discoverable by meta.type
+  - name: job.heartbeat
+    kind: function.lua
+    source: file://jobs.lua
+    method: heartbeat
+    meta:
+      type: cron.job
+      interval: "1s"
+
+  - name: job.cleanup
+    kind: function.lua
+    source: file://jobs.lua
+    method: cleanup
+    meta:
+      type: cron.job
+      interval: "3s"
+
+  - name: job.report
+    kind: function.lua
+    source: file://jobs.lua
+    method: report
+    meta:
+      type: cron.job
+      interval: "5s"
+
+  - name: job.backup
+    kind: function.lua
+    source: file://jobs.lua
+    method: backup
+    meta:
+      type: cron.job
+      interval: "7s"
