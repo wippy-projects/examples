@@ -1,0 +1,95 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Dependency ─────────────────────────────────────────────
+  - name: __dependency.llm
+    kind: ns.dependency
+    component: wippy/llm
+    version: "*"
+    parameters:
+      - name: env_storage
+        value: app:file_env
+      - name: process_host
+        value: app:processes
+
+  # ── Hosts ──────────────────────────────────────────────────
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # ── Environment ────────────────────────────────────────────
+
+  - name: file_env
+    kind: env.storage.file
+    file_path: ./.env
+    auto_create: true
+
+  # API keys — set in .env file
+  - name: openai_api_key
+    kind: env.variable
+    variable: OPENAI_API_KEY
+    storage: app:file_env
+
+  - name: anthropic_api_key
+    kind: env.variable
+    variable: ANTHROPIC_API_KEY
+    storage: app:file_env
+
+  # ── Models ─────────────────────────────────────────────────
+
+  - name: gpt_4o_mini
+    kind: registry.entry
+    meta:
+      type: llm.model
+      name: gpt-4o-mini
+      title: GPT-4o Mini
+      class: [ fast, chat ]
+      capabilities: [ generate, tool_use, structured_output ]
+      priority: 100
+    providers:
+      - id: wippy.llm.openai:provider
+        provider_model: gpt-4o-mini
+        options:
+          temperature: 0.7
+          max_tokens: 256
+
+  # ── Agent Process ──────────────────────────────────────────
+
+  - name: agent_process
+    kind: process.lua
+    source: file://agent.lua
+    method: main
+    modules:
+      - logger
+    imports:
+      llm: wippy.llm:llm
+      prompt: wippy.llm:prompt
+
+  - name: agent
+    kind: process.service
+    process: app:agent_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+      restart:
+        max_attempts: 5
+        initial_delay: 1s
+        backoff_factor: 2.0
+
+
+  # ── CLI Process ────────────────────────────────────────────
+
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - time
