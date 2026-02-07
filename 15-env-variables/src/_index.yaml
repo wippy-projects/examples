@@ -1,0 +1,77 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Hosts ──────────────────────────────────────────────────
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # ── Environment Storages ───────────────────────────────────
+
+  - name: os_env
+    kind: env.storage.os
+
+  - name: mem_env
+    kind: env.storage.memory
+
+  - name: file_env
+    kind: env.storage.file
+    file_path: ./config.env
+    auto_create: true
+    file_mode: 0600
+
+  # ── Environment Variables ──────────────────────────────────
+
+  - name: app_name
+    kind: env.variable
+    variable: APP_NAME
+    storage: app:file_env
+
+  - name: port
+    kind: env.variable
+    variable: PORT
+    storage: app:os_env
+    default: "8080"
+
+  - name: log_level
+    kind: env.variable
+    variable: LOG_LEVEL
+    storage: app:mem_env
+    default: "info"
+
+  - name: app_version
+    kind: env.variable
+    variable: APP_VERSION
+    storage: app:file_env
+    default: "1.0.0"
+    read_only: true
+
+  - name: greeting_style
+    kind: env.variable
+    variable: GREETING_STYLE
+    storage: app:file_env
+    default: "formal"
+
+  # ── Processes ──────────────────────────────────────────────
+
+  - name: cli
+    kind: process.lua
+    source: file://cli.lua
+    method: main
+    modules:
+      - io
+      - env
+
+  - name: greet
+    kind: function.lua
+    source: file://greet.lua
+    method: call
+    modules:
+      - env

@@ -28,6 +28,7 @@ wippy run                   # start all auto-started services
 | 12 | [crontab-registry](12-crontab-registry) | Registry-driven discovery, `funcs.call()`, dynamic spawn | `wippy run`                   |
 | 13 | [echo-service](13-echo-service)         | `spawn_monitored`, coroutines, workers, request/reply    | `wippy run -x app:cli`        |
 | 14 | [task-queue](14-task-queue)             | Queue, SQLite, migrations, concurrent workers            | `wippy run`                   |
+| 15 | [env-variables](15-env-variables)      | `env.get/set`, storage backends, router chain, defaults  | `wippy run -x app:cli`        |
 
 ## HTTP Examples
 
@@ -70,6 +71,8 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
 13 echo-service        — "Spawn a worker per request, monitor lifecycle"
        ↓
 14 task-queue          — "Queues + database: async work with persistence"
+       ↓
+15 env-variables       — "Configure apps: storage chain, defaults, runtime overrides"
 ```
 
 ## Key Patterns by Example
@@ -89,3 +92,5 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
 | `queue.publish()` / `queue.consumer`    | 14                      |
 | `sql.get()` / `sql.builder`             | 14                      |
 | Migrations (`process.service` one-shot) | 14                      |
+| `env.get()` / `env.set()` / `env.get_all()` | 15                 |
+| `env.storage.router` (chained backends) | 15                      |
