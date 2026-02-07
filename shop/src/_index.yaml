@@ -1,0 +1,195 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # --- Infrastructure ---
+
+  - name: processes
+    kind: process.host
+    host:
+      workers: 8
+    lifecycle:
+      auto_start: true
+
+  - name: gateway
+    kind: http.service
+    addr: ":8080"
+    lifecycle:
+      auto_start: true
+
+  - name: router
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /api
+
+  # --- Products (registry entries) ---
+
+  - name: product.laptop
+    kind: registry.entry
+    meta:
+      type: product
+      title: "Laptop Pro 16"
+    sku: "LAPTOP-001"
+    price: 1499.99
+    stock: 50
+
+  - name: product.keyboard
+    kind: registry.entry
+    meta:
+      type: product
+      title: "Mechanical Keyboard"
+    sku: "KB-002"
+    price: 149.99
+    stock: 200
+
+  - name: product.mouse
+    kind: registry.entry
+    meta:
+      type: product
+      title: "Wireless Mouse"
+    sku: "MOUSE-003"
+    price: 79.99
+    stock: 300
+
+  - name: product.monitor
+    kind: registry.entry
+    meta:
+      type: product
+      title: "4K Monitor 27"
+    sku: "MON-004"
+    price: 599.99
+    stock: 75
+
+  - name: product.headphones
+    kind: registry.entry
+    meta:
+      type: product
+      title: "Noise-Cancelling Headphones"
+    sku: "HP-005"
+    price: 299.99
+    stock: 150
+
+  # --- Cart process (spawned per user) ---
+
+  - name: cart
+    kind: process.lua
+    source: file://cart.lua
+    method: main
+    modules:
+      - logger
+      - events
+      - json
+
+  # --- Background services: delivery & notifier ---
+
+  - name: delivery_process
+    kind: process.lua
+    source: file://delivery.lua
+    method: main
+    modules:
+      - logger
+      - events
+      - json
+
+  - name: delivery
+    kind: process.service
+    process: app:delivery_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+      restart:
+        max_attempts: 10
+        initial_delay: 1s
+
+  - name: notifier_process
+    kind: process.lua
+    source: file://notifier.lua
+    method: main
+    modules:
+      - logger
+      - events
+      - json
+
+  - name: notifier
+    kind: process.service
+    process: app:notifier_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+      restart:
+        max_attempts: 10
+        initial_delay: 1s
+
+  # --- HTTP handlers ---
+
+  - name: list_products
+    kind: function.lua
+    source: file://handlers/products.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - registry
+
+  - name: list_products.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /products
+    func: app:list_products
+
+  - name: add_to_cart
+    kind: function.lua
+    source: file://handlers/cart_add.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - logger
+      - registry
+
+  - name: add_to_cart.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: POST
+    path: /cart/{user_id}/items
+    func: app:add_to_cart
+
+  - name: get_cart
+    kind: function.lua
+    source: file://handlers/cart_get.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - logger
+      - time
+
+  - name: get_cart.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /cart/{user_id}
+    func: app:get_cart
+
+  - name: checkout
+    kind: function.lua
+    source: file://handlers/cart_checkout.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - logger
+      - time
+
+  - name: checkout.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: POST
+    path: /cart/{user_id}/checkout
+    func: app:checkout

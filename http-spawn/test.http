@@ -1,0 +1,77 @@
+### Submit a quick task (3 seconds default)
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "generate-report"
+}
+
+### Submit a longer task (10 seconds)
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "process-dataset",
+  "duration": 10
+}
+
+### Submit a fast task (1 second)
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "send-notification",
+  "duration": 1
+}
+
+### Spawn multiple worker processes at once (each is an isolated actor)
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "worker-alpha",
+  "duration": 5
+}
+
+### Second worker process
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "worker-beta",
+  "duration": 3
+}
+
+### Third worker process
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "worker-gamma",
+  "duration": 7
+}
+
+### --- Error cases ---
+
+### Missing name field
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "duration": 5
+}
+
+### Invalid JSON
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+not-json
+
+### Empty name
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "name": "",
+  "duration": 2
+}

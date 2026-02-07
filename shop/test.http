@@ -1,0 +1,64 @@
+### List all products from registry
+GET http://localhost:8080/api/products
+
+### Add laptop to Alice's cart
+POST http://localhost:8080/api/cart/alice/items
+Content-Type: application/json
+
+{
+  "sku": "LAPTOP-001",
+  "quantity": 1
+}
+
+### Add keyboard to Alice's cart
+POST http://localhost:8080/api/cart/alice/items
+Content-Type: application/json
+
+{
+  "sku": "KB-002",
+  "quantity": 2
+}
+
+### Add headphones to Alice's cart
+POST http://localhost:8080/api/cart/alice/items
+Content-Type: application/json
+
+{
+  "sku": "HP-005",
+  "quantity": 1
+}
+
+### Get Alice's cart
+GET http://localhost:8080/api/cart/alice
+
+### Checkout Alice's cart (triggers delivery + email events)
+POST http://localhost:8080/api/cart/alice/checkout
+
+### After checkout, cart is gone
+GET http://localhost:8080/api/cart/alice
+
+### --- Bob's separate cart ---
+
+### Add mouse to Bob's cart
+POST http://localhost:8080/api/cart/bob/items
+Content-Type: application/json
+
+{
+  "sku": "MOUSE-003",
+  "quantity": 3
+}
+
+### Add monitor to Bob's cart
+POST http://localhost:8080/api/cart/bob/items
+Content-Type: application/json
+
+{
+  "sku": "MON-004",
+  "quantity": 1
+}
+
+### Get Bob's cart
+GET http://localhost:8080/api/cart/bob
+
+### Checkout Bob
+POST http://localhost:8080/api/cart/bob/checkout

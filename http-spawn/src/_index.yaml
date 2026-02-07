@@ -1,0 +1,53 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # --- Infrastructure ---
+
+  - name: processes
+    kind: process.host
+    host:
+      workers: 8
+    lifecycle:
+      auto_start: true
+
+  - name: gateway
+    kind: http.service
+    addr: ":8080"
+    lifecycle:
+      auto_start: true
+
+  - name: router
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /api
+
+  # --- Task worker process ---
+
+  - name: task_worker
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules:
+      - logger
+      - time
+
+  # --- HTTP handler ---
+
+  - name: submit_task
+    kind: function.lua
+    source: file://handler.lua
+    method: handler
+    modules:
+      - http
+      - json
+      - logger
+
+  - name: submit_task.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: POST
+    path: /tasks
+    func: app:submit_task
