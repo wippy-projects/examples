@@ -1,0 +1,15 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: hello
+    kind: process.lua
+    source: file://hello.lua
+    method: main
+    modules:
+      - io
