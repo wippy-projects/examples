@@ -33,12 +33,6 @@ the process and exits when it returns.
 | `app:terminal` | `terminal.host` | Terminal host (provides stdout)   |
 | `app:hello`    | `process.lua`   | Hello world process with `main()` |
 
-## Dependencies
-
-| Module           | Purpose               |
-|------------------|-----------------------|
-| `wippy/terminal` | Terminal host factory |
-
 ## Running
 
 ```bash
@@ -72,5 +66,6 @@ alive (see `http-async-task/`, `shop/` examples).
 - **Process** (`process.lua`) — the basic unit of computation. Every piece of code runs inside one. Each process has
   isolated memory and a unique PID.
 - **Terminal host** (`terminal.host`) — a host that bridges a process to stdin/stdout. Required for CLI-style programs.
+  For advanced configuration, see the `wippy/terminal` module.
 - **Modules** — built-in capabilities granted to a process. This example uses `io` for `io.print()`.
 - **`return 0`** — a process returns an exit code. `0` means success; the process terminates and its memory is freed.
