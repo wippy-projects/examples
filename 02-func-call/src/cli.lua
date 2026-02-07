@@ -5,7 +5,7 @@ local funcs = require("funcs")
 --- Functions are stateless — call, get result, done.
 ---
 --- Run: wippy run -x app:cli
-local function main()
+local function main(): integer
     io.print("=== Function Calls ===")
     io.print("")
 

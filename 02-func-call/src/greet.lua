@@ -1,6 +1,6 @@
 --- Greets a person by name.
 --- Called via: funcs.call("app:greet", "Alice")
-local function call(name)
+local function call(name: string): string
     return "Hello, " .. name .. "! Welcome to Wippy."
 end
 

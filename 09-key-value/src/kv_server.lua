@@ -81,7 +81,7 @@ local function main()
     end
 end
 
-function count_keys(t)
+function count_keys(t: {[string]: any}): integer
     local n = 0
     for _ in pairs(t) do n = n + 1 end
     return n

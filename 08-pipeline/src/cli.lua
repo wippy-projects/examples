@@ -6,7 +6,7 @@ local json = require("json")
 --- Data flows: CLI → Parser → Transformer → Formatter → Aggregator → CLI
 ---
 --- Run: wippy run -x app:cli
-local function main()
+local function main(): integer
     io.print("=== Pipeline: Process Chain ===")
     io.print("")
     io.print("Data flows through 4 processes:")

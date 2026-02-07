@@ -3,7 +3,7 @@ local json = require("json")
 
 --- Stage 3: Format enriched data as JSON strings.
 --- Demonstrates the json module in a pipeline context.
-local function main(next_pid)
+local function main(next_pid: string)
     local pid = process.pid()
     local inbox = process.inbox()
     local events = process.events()

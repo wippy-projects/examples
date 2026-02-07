@@ -3,8 +3,10 @@ local json = require("json")
 local logger = require("logger")
 local registry = require("registry")
 
+type Product = {title: string, sku: string, price: number}
+
 --- Find cart process by user_id, or spawn a new one
-local function find_or_spawn_cart(user_id)
+local function find_or_spawn_cart(user_id: string)
     -- Try to find existing cart process
     local pid, err = process.registry.lookup("cart:" .. user_id)
     if pid then
@@ -21,7 +23,7 @@ local function find_or_spawn_cart(user_id)
 end
 
 --- Resolve product from registry by SKU
-local function find_product(sku)
+local function find_product(sku: string)
     local entries, err = registry.find({ ["meta.type"] = "product" })
     if err then return nil, err end
 

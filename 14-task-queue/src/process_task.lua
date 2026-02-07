@@ -4,9 +4,11 @@ local logger = require("logger")
 local time = require("time")
 local json = require("json")
 
+type TaskPayload = {id: string, action: string, data: {[string]: any}, created_at: integer}
+
 --- Queue worker: processes a task, stores the result in SQLite.
 --- Returns true to ack (remove from queue), false to nack (requeue).
-local function main(task)
+local function main(task: TaskPayload): boolean
     local msg, msg_err = queue.message()
     if msg_err then
         logger:error("failed to get message", {error = tostring(msg_err)})

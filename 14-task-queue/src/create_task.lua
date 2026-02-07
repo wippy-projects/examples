@@ -2,6 +2,8 @@ local http = require("http")
 local queue = require("queue")
 local uuid = require("uuid")
 
+type Task = {id: string, action: string, data: {[string]: any}, created_at: integer}
+
 --- POST /tasks — creates a task and publishes it to the queue.
 local function handler()
     local req, req_err = http.request()

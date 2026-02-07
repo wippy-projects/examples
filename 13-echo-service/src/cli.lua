@@ -5,7 +5,7 @@ local time = require("time")
 --- Interactive CLI — type messages, see echoed results.
 ---
 --- Run: wippy run -x app:cli
-local function main()
+local function main(): integer
     local inbox = process.inbox()
 
     -- Wait for relay to register

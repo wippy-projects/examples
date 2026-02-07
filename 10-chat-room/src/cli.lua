@@ -2,7 +2,7 @@ local io = require("io")
 local time = require("time")
 local registry = require("registry")
 
-local function send_to_room(room_name, topic, data)
+local function send_to_room(room_name: string, topic: string, data: {[string]: any})
     local pid = process.registry.lookup("room:" .. room_name)
     if pid then
         process.send(pid, topic, data)
@@ -13,7 +13,7 @@ end
 --- Combines: processes, messages, events, registry, process.registry.
 ---
 --- Run: wippy run -x app:cli
-local function main()
+local function main(): integer
     io.print("=== Chat Room: Everything Combined ===")
     io.print("")
     io.print("Features used:")

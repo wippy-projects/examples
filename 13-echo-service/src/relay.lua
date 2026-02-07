@@ -4,7 +4,9 @@ local time = require("time")
 --- Relay process: receives echo requests, spawns a worker for each.
 --- Runs a stats coroutine that reports every 5 seconds.
 
-local stats = {
+type Stats = {messages: integer, workers_spawned: integer}
+
+local stats: Stats = {
     messages = 0,
     workers_spawned = 0
 }

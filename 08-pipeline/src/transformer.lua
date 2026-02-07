@@ -1,15 +1,17 @@
 local logger = require("logger")
 
+type EnrichedEvent = {level: string, severity: integer, event_type: string, user: string, raw: string}
+
 --- Stage 2: Transform/enrich parsed data.
 --- Normalizes level, adds severity score.
-local function main(next_pid)
+local function main(next_pid: string)
     local pid = process.pid()
     local inbox = process.inbox()
     local events = process.events()
 
     logger:info("Transformer ready", { pid = pid })
 
-    local function severity(level)
+    local function severity(level: string): integer
         if level == "INFO" then return 1
         elseif level == "WARN" then return 2
         elseif level == "ERROR" then return 3

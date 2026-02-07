@@ -5,7 +5,7 @@ local time = require("time")
 --- Demonstrates spawn_monitored + EXIT events + restart with backoff.
 ---
 --- Run: wippy run -x app:supervisor
-local function main()
+local function main(): integer
     io.print("=== Supervision: Let It Crash ===")
     io.print("")
     io.print("Spawning an unstable worker that randomly crashes.")

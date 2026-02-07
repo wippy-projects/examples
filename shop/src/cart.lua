@@ -2,10 +2,12 @@ local logger = require("logger")
 local events = require("events")
 local json = require("json")
 
+type CartItem = {sku: string, title: string, price: number, quantity: integer}
+
 --- Cart process — one per user.
 --- Maintains cart state in memory, communicates via messages.
 --- On checkout: emits event to event bus, then exits.
-local function main(user_id)
+local function main(user_id: string)
     local pid = process.pid()
 
     -- Register this process by name so HTTP handlers can find it

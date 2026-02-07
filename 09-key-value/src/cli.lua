@@ -5,7 +5,7 @@ local time = require("time")
 --- Demonstrates request/reply pattern via messages.
 ---
 --- Run: wippy run -x app:cli
-local function main()
+local function main(): integer
     io.print("=== Key-Value Store as a Process ===")
     io.print("")
 

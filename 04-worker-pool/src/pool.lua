@@ -1,12 +1,15 @@
 local io = require("io")
 local time = require("time")
 
+type Job = {id: integer, input: integer}
+type Result = {job_id: integer, worker: integer, value: integer}
+
 --- Worker pool using channels and coroutines.
 --- Demonstrates fan-out (distribute work) and fan-in (collect results).
 --- All within a single process — channels coordinate coroutines.
 ---
 --- Run: wippy run -x app:pool
-local function main()
+local function main(): integer
     io.print("=== Worker Pool: Channels + Coroutines ===")
     io.print("")
 

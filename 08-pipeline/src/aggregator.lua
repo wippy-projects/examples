@@ -1,6 +1,8 @@
 local logger = require("logger")
 
---- Stage 3: Aggregate enriched data.
+type Summary = {total: integer, by_type: {[string]: integer}, by_user: {[string]: integer}, max_severity: integer}
+
+--- Stage 4: Aggregate enriched data.
 --- Counts events by type and max severity, sends summary back to CLI.
 local function main()
     local pid = process.pid()

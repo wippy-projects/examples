@@ -3,7 +3,7 @@ local time = require("time")
 
 --- Shared job loop: runs a named task on a fixed interval.
 --- Each job is a separate process, started via process.service.
-local function run_job(name, interval)
+local function run_job(name: string, interval: string)
     logger:info("Job started", { name = name, interval = interval, pid = process.pid() })
 
     local evts = process.events()

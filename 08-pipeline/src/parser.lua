@@ -1,8 +1,10 @@
 local logger = require("logger")
 
+type ParsedEvent = {level: string, event_type: string, user: string, raw: string}
+
 --- Stage 1: Parse raw log lines into structured data.
 --- Receives next_pid (transformer) as argument.
-local function main(next_pid)
+local function main(next_pid: string)
     local pid = process.pid()
     local inbox = process.inbox()
     local events = process.events()

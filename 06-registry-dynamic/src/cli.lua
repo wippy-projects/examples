@@ -6,7 +6,7 @@ local json = require("json")
 --- add new entries at runtime, query again.
 ---
 --- Run: wippy run -x app:cli
-local function main()
+local function main(): integer
     io.print("=== Dynamic Registry ===")
     io.print("")
 

@@ -2,7 +2,7 @@ local time = require("time")
 
 --- Worker: receives sender PID and data, echoes back uppercased.
 --- Each worker handles exactly one message and exits.
-local function main(sender_pid, data)
+local function main(sender_pid: string, data: string): integer
     time.sleep("100ms")
 
     local response = {

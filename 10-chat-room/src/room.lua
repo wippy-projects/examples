@@ -2,11 +2,13 @@ local logger = require("logger")
 local events = require("events")
 local registry = require("registry")
 
+type ChatMessage = {user: string, text: string, time: integer}
+
 --- Chat room process — one per room.
 --- Maintains members and history. Emits events on activity.
 --- Registers in process.registry for name lookup.
 --- Registers in app registry as a discoverable room.
-local function main(room_name)
+local function main(room_name: string)
     local pid = process.pid()
     local members = {}   -- { [username] = true }
     local history = {}   -- { {user, text, time} }

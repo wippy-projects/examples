@@ -2,11 +2,13 @@ local logger = require("logger")
 local events = require("events")
 local time = require("time")
 
+type UserEvent = {kind: string, path: string, data: {[string]: string}}
+
 --- Publisher service: emits user lifecycle events to the event bus.
 --- Two subscribers (audit_log, counter) react independently.
 ---
 --- Run: wippy run
-local function main()
+local function main(): integer
     -- Wait for subscribers to start
     time.sleep("500ms")
 

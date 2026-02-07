@@ -4,7 +4,7 @@ local funcs = require("funcs")
 
 --- Generic cron worker: calls a function on a timer.
 --- Receives entry ID and interval as spawn arguments from the scheduler.
-local function main(entry_id, interval)
+local function main(entry_id: string, interval: string)
     logger:info("Worker started", { entry = entry_id, interval = interval, pid = process.pid() })
 
     local evts = process.events()

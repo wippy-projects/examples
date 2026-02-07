@@ -4,7 +4,7 @@ local io = require("io")
 --- A process running on a terminal host with stdout access.
 ---
 --- Run: wippy run -x app:hello
-local function main()
+local function main(): integer
     io.print("Hello from Wippy!")
     io.print("My PID: " .. process.pid())
     io.print("")

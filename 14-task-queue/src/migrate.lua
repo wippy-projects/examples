@@ -2,7 +2,7 @@ local sql = require("sql")
 local logger = require("logger")
 
 --- Migration: creates the tasks table. Runs once on startup, exits with code 0.
-local function main()
+local function main(): integer
     local db, err = sql.get("app:db")
     if err then
         logger:error("failed to connect", {error = tostring(err)})

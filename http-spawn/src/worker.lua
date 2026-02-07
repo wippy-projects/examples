@@ -1,11 +1,13 @@
 local logger = require("logger")
 local time = require("time")
 
+type TaskConfig = {name: string, duration: integer}
+
 --- Task worker process.
 --- Receives task data as argument, executes the work step by step,
 --- then exits cleanly (return 0). The process dies, memory is freed.
 --- Each task = its own isolated actor. No shared state.
-local function main(task)
+local function main(task: TaskConfig): integer
     local pid = process.pid()
     local name = task.name or "unknown"
     local duration = task.duration or 3
