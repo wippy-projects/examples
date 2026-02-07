@@ -1,0 +1,57 @@
+version: "1.0"
+namespace: app
+
+entries:
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # Subscriber: logs events
+  - name: audit_log
+    kind: process.lua
+    source: file://audit_log.lua
+    method: main
+    modules:
+      - logger
+      - events
+
+  - name: audit_log.service
+    kind: process.service
+    process: app:audit_log
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Subscriber: counts events
+  - name: counter
+    kind: process.lua
+    source: file://counter.lua
+    method: main
+    modules:
+      - logger
+      - events
+
+  - name: counter.service
+    kind: process.service
+    process: app:counter
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  # Publisher: emits user events
+  - name: publisher
+    kind: process.lua
+    source: file://publisher.lua
+    method: main
+    modules:
+      - logger
+      - events
+      - time
+
+  - name: publisher.service
+    kind: process.service
+    process: app:publisher
+    host: app:processes
+    lifecycle:
+      auto_start: true
