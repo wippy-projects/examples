@@ -1,0 +1,77 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Hosts ──────────────────────────────────────────────────
+  - name: processes
+    kind: process.host
+    host:
+      workers: 32
+      queue_size: 4096
+    lifecycle:
+      auto_start: true
+
+  # ── Environment ────────────────────────────────────────────
+
+  - name: os_env
+    kind: env.storage.os
+
+  # Number of long-lived worker processes to spawn
+  - name: num_workers
+    kind: env.variable
+    variable: NUM_WORKERS
+    storage: app:os_env
+    default: "10000"
+
+  # Worker tick interval range (each worker gets a random interval in this range)
+  - name: tick_min
+    kind: env.variable
+    variable: TICK_MIN
+    storage: app:os_env
+    default: "500ms"
+
+  - name: tick_max
+    kind: env.variable
+    variable: TICK_MAX
+    storage: app:os_env
+    default: "3s"
+
+  # How often to print stats
+  - name: stats_interval
+    kind: env.variable
+    variable: STATS_INTERVAL
+    storage: app:os_env
+    default: "2s"
+
+  # ── Processes ──────────────────────────────────────────────
+
+  # Spawner: launches N workers, then monitors their ticks
+  - name: spawner_process
+    kind: process.lua
+    source: file://spawner.lua
+    method: main
+    modules:
+      - logger
+      - env
+      - time
+
+  # Spawner as a supervised service (auto-start)
+  - name: spawner
+    kind: process.service
+    process: app:spawner_process
+    host: app:processes
+    lifecycle:
+      auto_start: true
+      restart:
+        max_attempts: 5
+        initial_delay: 1s
+        backoff_factor: 2.0
+
+  # Worker: runs a while loop, ticks periodically, reports to spawner
+  - name: worker
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules:
+      - time
+      - logger

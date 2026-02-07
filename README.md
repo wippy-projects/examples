@@ -28,7 +28,8 @@ wippy run                   # start all auto-started services
 | 12 | [crontab-registry](12-crontab-registry) | Registry-driven discovery, `funcs.call()`, dynamic spawn | `wippy run`                   |
 | 13 | [echo-service](13-echo-service)         | `spawn_monitored`, coroutines, workers, request/reply    | `wippy run -x app:cli`        |
 | 14 | [task-queue](14-task-queue)             | Queue, SQLite, migrations, concurrent workers            | `wippy run`                   |
-| 15 | [env-variables](15-env-variables)      | `env.get/set`, storage backends, router chain, defaults  | `wippy run -x app:cli`        |
+| 15 | [env-variables](15-env-variables)       | `env.get/set`, storage backends, router chain, defaults  | `wippy run -x app:cli`        |
+| 18 | [mass-spawn](18-mass-spawn)             | 1000+ processes, `spawn_monitored`, fan-in, throughput   | `wippy run`                   |
 
 ## HTTP Examples
 
@@ -73,24 +74,29 @@ These start an HTTP server. Run with `wippy run` and test with `curl`.
 14 task-queue          — "Queues + database: async work with persistence"
        ↓
 15 env-variables       — "Configure apps: storage chain, defaults, runtime overrides"
+       ↓
+18 mass-spawn          — "1000 processes? Lightweight actors with random ticking."
 ```
 
 ## Key Patterns by Example
 
-| Pattern                                 | Examples                |
-|-----------------------------------------|-------------------------|
-| `process.spawn()` / `spawn_monitored()` | 05, 08, 10, 12, 13      |
-| `process.service` (auto-start)          | 03, 07, 09, 11, 12, 13  |
-| `process.send()` / `inbox()`            | 03, 08, 09, 10, 13      |
-| `process.registry`                      | 03, 09, 10, 13          |
-| `channel.select` + `time.after()`       | 08, 09, 10, 11, 12, 13  |
-| `channel.new()` + `coroutine.spawn()`   | 04, 13, http-async-task |
-| `funcs.call()`                          | 02, 12                  |
-| `events.send()` / `subscribe()`         | 07, 10                  |
-| `registry.find()` / `snapshot()`        | 06, 10, 12              |
-| `json.encode()` / `decode()`            | 08, 14                  |
-| `queue.publish()` / `queue.consumer`    | 14                      |
-| `sql.get()` / `sql.builder`             | 14                      |
-| Migrations (`process.service` one-shot) | 14                      |
-| `env.get()` / `env.set()` / `env.get_all()` | 15                 |
-| `env.storage.router` (chained backends) | 15                      |
+| Pattern                                           | Examples                   |
+|---------------------------------------------------|----------------------------|
+| `process.spawn()` / `spawn_monitored()`           | 05, 08, 10, 12, 13, 18     |
+| `process.service` (auto-start)                    | 03, 07, 09, 11, 12, 13, 18 |
+| `process.send()` / `inbox()`                      | 03, 08, 09, 10, 13         |
+| `process.registry`                                | 03, 09, 10, 13             |
+| `channel.select` + `time.after()`                 | 08, 09, 10, 11, 12, 13, 18 |
+| `channel.new()` + `coroutine.spawn()`             | 04, 13, http-async-task    |
+| `funcs.call()`                                    | 02, 12                     |
+| `events.send()` / `subscribe()`                   | 07, 10                     |
+| `registry.find()` / `snapshot()`                  | 06, 10, 12                 |
+| `json.encode()` / `decode()`                      | 08, 14                     |
+| `queue.publish()` / `queue.consumer`              | 14                         |
+| `sql.get()` / `sql.builder`                       | 14                         |
+| Migrations (`process.service` one-shot)           | 14                         |
+| `env.get()` / `env.set()` / `env.get_all()`       | 15                         |
+| `env.storage.router` (chained backends)           | 15                         |
+| Mass `spawn_monitored` + fan-in collect           | 18                         |
+| `time.after()` random ticking + `time.ticker`     | 18                         |
+| `env.variable` for config + `process.host` tuning | 18                         |
