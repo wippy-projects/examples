@@ -1,0 +1,330 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Infrastructure ─────────────────────────────────────────
+
+  - name: gateway
+    kind: http.service
+    addr: ":8090"
+    lifecycle:
+      auto_start: true
+
+  - name: router
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /
+
+  # ── Views Dependency ───────────────────────────────────────
+
+  - name: views
+    kind: ns.dependency
+    component: wippy/views
+    version: "*"
+    parameters:
+      - name: api_router
+        value: app:router
+
+  # ── Templates ──────────────────────────────────────────────
+
+  - name: templates
+    kind: template.set
+
+  - name: layout
+    kind: template.jet
+    set: app:templates
+    source: file://templates/layout.jet
+
+  - name: viewer
+    kind: template.jet
+    set: app:templates
+    source: file://templates/page.jet
+    meta:
+      type: view.page
+      title: "Registry Graph"
+      path: /
+    data_func: app:page_data
+
+  # ── Data Functions ─────────────────────────────────────────
+
+  - name: page_data
+    kind: function.lua
+    source: file://data/page_data.lua
+    method: handler
+    imports:
+      graph_builder: app:graph_builder
+
+  # ── Shared Library ─────────────────────────────────────────
+
+  - name: graph_builder
+    kind: library.lua
+    source: file://graph_builder.lua
+    modules:
+      - registry
+
+  # ── HTTP Handlers ──────────────────────────────────────────
+
+  - name: page
+    kind: function.lua
+    source: file://handlers/page.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      renderer: wippy.views:renderer
+
+  - name: page.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /
+    func: app:page
+
+  - name: graph
+    kind: function.lua
+    source: file://handlers/graph.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      graph_builder: app:graph_builder
+
+  - name: graph.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/graph
+    func: app:graph
+
+  - name: entries
+    kind: function.lua
+    source: file://handlers/entries.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      graph_builder: app:graph_builder
+
+  - name: entries.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/entries
+    func: app:entries
+
+  - name: kinds
+    kind: function.lua
+    source: file://handlers/kinds.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      graph_builder: app:graph_builder
+
+  - name: kinds.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/kinds
+    func: app:kinds
+
+  - name: namespaces
+    kind: function.lua
+    source: file://handlers/namespaces.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      graph_builder: app:graph_builder
+
+  - name: namespaces.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/namespaces
+    func: app:namespaces
+
+  - name: rules
+    kind: function.lua
+    source: file://handlers/rules.lua
+    method: handler
+    modules:
+      - http
+    imports:
+      graph_builder: app:graph_builder
+
+  - name: rules.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router
+    method: GET
+    path: /api/rules
+    func: app:rules
+
+  # ── Edge Rules ─────────────────────────────────────────────
+
+  - name: rule.http_router.server
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "http.router"
+      field: "server"
+      location: "meta"
+      label: "server"
+      edge_style: "solid"
+      category: "http"
+
+  - name: rule.http_endpoint.router
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "http.endpoint"
+      field: "router"
+      location: "meta"
+      label: "router"
+      edge_style: "solid"
+      category: "http"
+
+  - name: rule.http_endpoint.func
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "http.endpoint"
+      field: "func"
+      location: "data"
+      label: "func"
+      edge_style: "solid"
+      category: "http"
+
+  - name: rule.process_service.process
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "process.service"
+      field: "process"
+      location: "data"
+      label: "process"
+      edge_style: "solid"
+      category: "runtime"
+
+  - name: rule.process_service.host
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "process.service"
+      field: "host"
+      location: "data"
+      label: "host"
+      edge_style: "solid"
+      category: "runtime"
+
+  - name: rule.queue_consumer.queue
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "queue.consumer"
+      field: "queue"
+      location: "data"
+      label: "queue"
+      edge_style: "solid"
+      category: "queue"
+
+  - name: rule.queue_consumer.func
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "queue.consumer"
+      field: "func"
+      location: "data"
+      label: "func"
+      edge_style: "solid"
+      category: "queue"
+
+  - name: rule.queue_queue.driver
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "queue.queue"
+      field: "driver"
+      location: "data"
+      label: "driver"
+      edge_style: "solid"
+      category: "queue"
+
+  - name: rule.template_jet.set
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "template.jet"
+      field: "set"
+      location: "data"
+      label: "set"
+      edge_style: "solid"
+      category: "template"
+
+  - name: rule.template_jet.data_func
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "template.jet"
+      field: "data_func"
+      location: "data"
+      label: "data_func"
+      edge_style: "solid"
+      category: "template"
+
+  - name: rule.imports
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "function.lua|process.lua|library.lua|workflow.lua"
+      type: "map_values"
+      field: "imports"
+      location: "data"
+      label_prefix: "import:"
+      edge_style: "solid"
+      category: "import"
+
+  - name: rule.depends_on
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "*"
+      type: "array"
+      field: "lifecycle.depends_on"
+      location: "data"
+      label: "depends_on"
+      edge_style: "dashed"
+      category: "lifecycle"
+
+  - name: rule.ns_dependency.params
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "ns.dependency"
+      type: "array_field"
+      field: "parameters"
+      value_field: "value"
+      label_field: "name"
+      location: "data"
+      edge_style: "dotted"
+      category: "dependency"

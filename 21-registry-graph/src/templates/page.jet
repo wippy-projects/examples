@@ -1,0 +1,545 @@
+{{ extends "layout" }}
+
+{{ block title() }}{{ data.title }}{{ end }}
+
+{{ block styles() }}
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #f0f2f5; color: #333; }
+    .header { background: #1a1a2e; color: white; padding: 12px 24px;
+              display: flex; align-items: center; gap: 16px; }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    button { padding: 6px 14px; border-radius: 6px; border: none;
+             background: #4f46e5; color: white; font-size: 13px; cursor: pointer; }
+    button:hover { background: #4338ca; }
+    .toolbar { display: flex; align-items: center; gap: 8px; }
+    .toolbar button.active { background: #6366f1; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+    .toolbar select { padding: 6px 10px; border-radius: 6px; border: 1px solid #555;
+                      background: #2a2a4a; color: #ccc; font-size: 12px; outline: none; }
+    .toolbar select:focus { border-color: #6366f1; }
+    .stats { color: #888; font-size: 12px; margin-left: auto; }
+    .content { display: flex; height: calc(100vh - 48px); }
+
+    /* Panel 1: Sidebar */
+    .sidebar { width: 260px; background: #f8f9fa; border-right: 1px solid #ddd;
+               display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-toggle { display: flex; border-bottom: 1px solid #ddd; }
+    .sidebar-toggle button { flex: 1; border-radius: 0; background: #fff; color: #666;
+                             border: none; border-bottom: 2px solid transparent;
+                             padding: 8px 10px; font-size: 12px; }
+    .sidebar-toggle button:hover { background: #f0f4ff; color: #333; }
+    .sidebar-toggle button.active { color: #4f46e5; border-bottom-color: #4f46e5;
+                                    font-weight: 600; background: #fff; }
+    .tree { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .tree-root { list-style: none; }
+    .tree-folder { padding: 0; }
+    .tree-folder-label { display: flex; align-items: center; gap: 4px;
+                         padding: 5px 10px; font-size: 12px; font-weight: 600;
+                         color: #555; cursor: pointer; user-select: none; }
+    .tree-folder-label:hover { background: #eef1f5; cursor: pointer; }
+    .tree-folder-label.active { background: #dbeafe; color: #1e40af; }
+    .tree-folder-label .icon { font-size: 10px; width: 12px; text-align: center;
+                               transition: transform 0.15s; color: #999; }
+    .tree-folder-label .icon.open { transform: rotate(90deg); }
+    .tree-folder-label .count { color: #999; font-weight: 400; font-size: 11px; margin-left: auto; }
+    .tree-files { list-style: none; padding-left: 12px; }
+    .tree-file { padding: 3px 10px 3px 16px; font-size: 12px;
+                 font-family: 'SF Mono', 'Fira Code', monospace;
+                 color: #555; cursor: pointer; border-radius: 0;
+                 transition: background 0.1s; list-style: none;
+                 display: flex; align-items: center; gap: 6px; }
+    .tree-file:hover { background: #e8f4fd; }
+    .tree-file.active { background: #dbeafe; font-weight: 600; color: #1e40af; }
+    .kind-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Panel 2: DOT Source */
+    .dot-panel { width: 500px; background: #1e1e2e; border-right: 1px solid #333;
+                 overflow: auto; flex-shrink: 0; display: flex; flex-direction: column; }
+    .dot-panel h3 { font-size: 11px; color: #888; padding: 10px 12px 6px;
+                    text-transform: uppercase; letter-spacing: 0.5px; }
+    .dot-panel pre { flex: 1; font-size: 11px; line-height: 1.5; color: #cdd6f4;
+                     padding: 0 12px 12px; margin: 0; white-space: pre-wrap;
+                     word-break: break-all; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+
+    /* Panel 3: Graph Render */
+    .graph-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden;
+                     position: relative; }
+    .graph-tabs { display: none; padding: 6px 16px 0; background: #f8f9fa;
+                  border-bottom: 1px solid #ddd; gap: 0; }
+    .graph-tabs button { background: none; color: #666; border: none;
+                         border-bottom: 2px solid transparent;
+                         padding: 6px 12px; font-size: 12px; border-radius: 0; cursor: pointer; }
+    .graph-tabs button:hover { color: #333; background: #eee; }
+    .graph-tabs button.active { color: #4f46e5; border-bottom-color: #4f46e5; font-weight: 600; }
+    .graph-area { flex: 1; overflow: hidden; background: #ffffff; position: relative; }
+    .graph-area svg { width: 100%; height: 100%; }
+    .zoom-controls { position: absolute; bottom: 12px; right: 12px; display: flex;
+                     gap: 4px; z-index: 10; }
+    .zoom-controls button { width: 32px; height: 32px; padding: 0; font-size: 16px;
+                            background: #fff; color: #333; border: 1px solid #ddd;
+                            border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .zoom-controls button:hover { background: #f0f0f0; color: #333; }
+
+    /* Legend */
+    .legend { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.95);
+              border: 1px solid #ddd; border-radius: 8px; padding: 12px; z-index: 10;
+              font-size: 11px; max-height: 60vh; overflow-y: auto; min-width: 180px;
+              display: none; }
+    .legend-title { font-weight: 600; font-size: 12px; margin-bottom: 8px;
+                    display: flex; justify-content: space-between; align-items: center; }
+    .legend-close { background: none; border: none; color: #999; font-size: 16px;
+                    cursor: pointer; padding: 0 4px; width: auto; height: auto; }
+    .legend-close:hover { color: #333; background: none; }
+    .legend-subtitle { font-weight: 600; color: #888; font-size: 10px;
+                       text-transform: uppercase; margin: 8px 0 4px; letter-spacing: 0.5px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; }
+    .legend-item:hover { background: #f0f4ff; }
+    .legend-item.dimmed { opacity: 0.3; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.15); flex-shrink: 0; }
+    .legend-line { width: 20px; height: 0; flex-shrink: 0; }
+    .legend-toggle { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px;
+                     padding: 0; font-size: 16px; background: #fff; color: #333;
+                     border: 1px solid #ddd; border-radius: 6px; z-index: 9;
+                     box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .legend-toggle:hover { background: #f0f0f0; color: #333; }
+
+    .loading { color: #999; font-size: 14px; padding: 40px; }
+    .error { color: #dc2626; font-size: 13px; padding: 16px;
+             background: #fef2f2; border-radius: 6px; margin: 16px; }
+
+    /* Export buttons */
+    .toolbar .export-btn { background: #374151; font-size: 11px; padding: 5px 10px; }
+    .toolbar .export-btn:hover { background: #4b5563; }
+</style>
+{{ end }}
+
+{{ block body() }}
+<div class="header">
+    <h1>{{ data.title }}</h1>
+    <div class="toolbar">
+        <button class="active" id="btn-full" onclick="loadFullGraph()">Full Graph</button>
+        <button id="btn-orphans" onclick="loadOrphans()">Orphans</button>
+        <select id="kind-filter" onchange="loadByKind(this.value)">
+            <option value="">All Kinds</option>
+            {{ range data.kinds }}
+            <option value="{{ .kind }}">{{ .kind }} ({{ .count }})</option>
+            {{ end }}
+        </select>
+        <select id="ns-filter" onchange="loadByNs(this.value)">
+            <option value="">All Namespaces</option>
+            {{ range data.namespaces }}
+            <option value="{{ .ns }}">{{ .ns }} ({{ .count }})</option>
+            {{ end }}
+        </select>
+        <button class="export-btn" onclick="exportSVG()" title="Download SVG">↓ SVG</button>
+        <button class="export-btn" onclick="copyDOT()" title="Copy DOT">📋 DOT</button>
+        <span id="stats" class="stats"></span>
+    </div>
+</div>
+<div class="content">
+    <div class="sidebar">
+        <div class="sidebar-toggle">
+            <button class="active" id="btn-by-kind" onclick="switchGrouping('kind')">By Kind</button>
+            <button id="btn-by-ns" onclick="switchGrouping('namespace')">By Namespace</button>
+        </div>
+        <div class="tree" id="tree">
+            <div class="loading" style="padding:16px">Loading...</div>
+        </div>
+    </div>
+    <div class="dot-panel">
+        <h3>DOT Source</h3>
+        <pre id="dot-src">Loading graph...</pre>
+    </div>
+    <div class="graph-wrapper">
+        <div class="graph-tabs" id="graph-tabs">
+            <button class="active" data-dir="both" onclick="switchDir(this)">Neighborhood</button>
+            <button data-dir="out" onclick="switchDir(this)">Dependencies</button>
+            <button data-dir="in" onclick="switchDir(this)">Dependents</button>
+        </div>
+        <div class="graph-area" id="graph">
+            <div class="loading">Loading graph...</div>
+        </div>
+        <button class="legend-toggle" onclick="toggleLegend()" title="Legend">◑</button>
+        <div class="legend" id="legend">
+            <div class="legend-title">Legend <button class="legend-close" onclick="toggleLegend()">×</button></div>
+            <div class="legend-section">
+                <div class="legend-subtitle">Entry Kinds</div>
+                <div id="legend-kinds"></div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-subtitle">Edge Categories</div>
+                <div id="legend-edges"></div>
+            </div>
+        </div>
+        <div class="zoom-controls" id="zoom-controls" style="display:none">
+            <button onclick="zoomIn()" title="Zoom in">+</button>
+            <button onclick="zoomOut()" title="Zoom out">&minus;</button>
+            <button onclick="zoomReset()" title="Fit to view">&#8634;</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ block scripts() }}
+<script>
+    var KINDS_DATA = [
+        {{ range data.kinds }}
+        {kind: "{{ .kind }}", count: {{ .count }}},
+        {{ end }}
+    ];
+    var NS_DATA = [
+        {{ range data.namespaces }}
+        {ns: "{{ .ns }}", count: {{ .count }}},
+        {{ end }}
+    ];
+
+    var KIND_COLORS = {
+        "http.service": {fill: "#fecaca", border: "#ef4444"},
+        "http.router": {fill: "#fed7aa", border: "#f97316"},
+        "http.endpoint": {fill: "#fde68a", border: "#eab308"},
+        "function.lua": {fill: "#bbf7d0", border: "#22c55e"},
+        "process.lua": {fill: "#bfdbfe", border: "#3b82f6"},
+        "process.service": {fill: "#c7d2fe", border: "#6366f1"},
+        "process.host": {fill: "#ddd6fe", border: "#8b5cf6"},
+        "library.lua": {fill: "#d9f99d", border: "#84cc16"},
+        "db.sql.sqlite": {fill: "#e9d5ff", border: "#a855f7"},
+        "db.sql.postgres": {fill: "#e9d5ff", border: "#a855f7"},
+        "store.memory": {fill: "#cffafe", border: "#06b6d4"},
+        "queue.driver.memory": {fill: "#fbcfe8", border: "#ec4899"},
+        "queue.queue": {fill: "#fce7f3", border: "#f472b6"},
+        "queue.consumer": {fill: "#ffe4e6", border: "#fb7185"},
+        "template.set": {fill: "#f5f5f4", border: "#a8a29e"},
+        "template.jet": {fill: "#fafaf9", border: "#d6d3d1"},
+        "ns.dependency": {fill: "#e0e7ff", border: "#818cf8"},
+        "registry.entry": {fill: "#f3f4f6", border: "#9ca3af"},
+        "workflow.lua": {fill: "#fef9c3", border: "#ca8a04"},
+    };
+
+    var CATEGORY_COLORS = {
+        http: "#ef4444",
+        runtime: "#3b82f6",
+        queue: "#ec4899",
+        storage: "#a855f7",
+        template: "#a8a29e",
+        temporal: "#f59e0b",
+        "import": "#059669",
+        lifecycle: "#9ca3af",
+        dependency: "#6366f1",
+        contract: "#14b8a6",
+        views: "#f97316",
+        unknown: "#888888",
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script type="module">
+    import * as Viz from "https://cdn.jsdelivr.net/npm/@viz-js/viz/+esm";
+
+    let viz = null;
+    let panZoom = null;
+    let allEntries = [];
+    let currentGrouping = "kind";
+    let currentEntry = null;
+    let currentDir = "both";
+
+    async function initViz() {
+        if (!viz) viz = await Viz.instance();
+        return viz;
+    }
+
+    // ── Tree building ──────────────────────────────────────
+
+    function getKindColor(kind) {
+        const c = KIND_COLORS[kind];
+        return c ? c.border : "#9ca3af";
+    }
+
+    window.toggleFolder = function(iconEl) {
+        iconEl.classList.toggle('open');
+        var files = iconEl.closest('.tree-folder-label').nextElementSibling;
+        files.style.display = iconEl.classList.contains('open') ? '' : 'none';
+    }
+
+    function buildTreeByKind(entries) {
+        const groups = {};
+        entries.forEach(e => {
+            if (!groups[e.kind]) groups[e.kind] = [];
+            groups[e.kind].push(e);
+        });
+        const sortedKinds = Object.keys(groups).sort();
+        let html = '<ul class="tree-root">';
+        sortedKinds.forEach(kind => {
+            const items = groups[kind].sort((a, b) => a.name.localeCompare(b.name));
+            html += '<li class="tree-folder">';
+            html += '<div class="tree-folder-label" data-kind="' + kind + '">';
+            html += '<span class="icon open" onclick="event.stopPropagation();toggleFolder(this)">&#9654;</span>';
+            html += '<span class="kind-dot" style="background:' + getKindColor(kind) + '"></span> ' + kind;
+            html += '<span class="count">' + items.length + '</span>';
+            html += '</div>';
+            html += '<ul class="tree-files">';
+            items.forEach(e => {
+                html += '<li class="tree-file" data-entry="' + e.id + '">';
+                html += '<span class="kind-dot" style="background:' + getKindColor(e.kind) + '"></span>';
+                html += e.name;
+                html += '</li>';
+            });
+            html += '</ul></li>';
+        });
+        html += '</ul>';
+        return html;
+    }
+
+    function buildTreeByNs(entries) {
+        const groups = {};
+        entries.forEach(e => {
+            if (!groups[e.ns]) groups[e.ns] = [];
+            groups[e.ns].push(e);
+        });
+        const sortedNs = Object.keys(groups).sort();
+        let html = '<ul class="tree-root">';
+        sortedNs.forEach(ns => {
+            const items = groups[ns].sort((a, b) => a.name.localeCompare(b.name));
+            html += '<li class="tree-folder">';
+            html += '<div class="tree-folder-label" data-ns="' + ns + '">';
+            html += '<span class="icon open" onclick="event.stopPropagation();toggleFolder(this)">&#9654;</span>';
+            html += '&#128193; ' + ns;
+            html += '<span class="count">' + items.length + '</span>';
+            html += '</div>';
+            html += '<ul class="tree-files">';
+            items.forEach(e => {
+                html += '<li class="tree-file" data-entry="' + e.id + '">';
+                html += '<span class="kind-dot" style="background:' + getKindColor(e.kind) + '"></span>';
+                html += e.name;
+                html += '</li>';
+            });
+            html += '</ul></li>';
+        });
+        html += '</ul>';
+        return html;
+    }
+
+    function updateTree() {
+        const tree = document.getElementById("tree");
+        if (allEntries.length === 0) {
+            tree.innerHTML = '<div class="loading" style="padding:16px">No entries</div>';
+            return;
+        }
+        tree.innerHTML = currentGrouping === "kind"
+            ? buildTreeByKind(allEntries)
+            : buildTreeByNs(allEntries);
+        tree.querySelectorAll(".tree-file").forEach(li => {
+            li.addEventListener("click", () => {
+                currentEntry = li.dataset.entry;
+                currentDir = "both";
+                document.querySelectorAll(".tree-file").forEach(x => x.classList.remove("active"));
+                document.querySelectorAll(".tree-folder-label").forEach(x => x.classList.remove("active"));
+                li.classList.add("active");
+                loadEntryGraph(currentEntry, currentDir);
+            });
+        });
+        tree.querySelectorAll(".tree-folder-label").forEach(lbl => {
+            lbl.addEventListener("click", () => {
+                currentEntry = null;
+                document.querySelectorAll(".tree-file").forEach(x => x.classList.remove("active"));
+                document.querySelectorAll(".tree-folder-label").forEach(x => x.classList.remove("active"));
+                lbl.classList.add("active");
+                document.getElementById("graph-tabs").style.display = "none";
+                if (lbl.dataset.ns) {
+                    setActiveToolbar(null);
+                    fetchAndRenderGraph("/api/graph?ns=" + encodeURIComponent(lbl.dataset.ns));
+                } else if (lbl.dataset.kind) {
+                    setActiveToolbar(null);
+                    fetchAndRenderGraph("/api/graph?kind=" + encodeURIComponent(lbl.dataset.kind));
+                }
+            });
+        });
+    }
+
+    async function loadEntries() {
+        try {
+            const res = await fetch("/api/entries");
+            const data = await res.json();
+            allEntries = data.entries || [];
+            updateTree();
+        } catch(e) {
+            document.getElementById("tree").innerHTML = '<div class="error">Failed to load entries</div>';
+        }
+    }
+
+    window.switchGrouping = function(mode) {
+        currentGrouping = mode;
+        document.getElementById("btn-by-kind").classList.toggle("active", mode === "kind");
+        document.getElementById("btn-by-ns").classList.toggle("active", mode === "namespace");
+        updateTree();
+    };
+
+    // ── Graph rendering ────────────────────────────────────
+
+    function showDot(dot) {
+        document.getElementById("dot-src").textContent = dot;
+    }
+
+    async function renderDot(dot) {
+        const area = document.getElementById("graph");
+        showDot(dot);
+        if (panZoom) { panZoom.destroy(); panZoom = null; }
+        try {
+            const v = await initViz();
+            const svg = v.renderSVGElement(dot);
+            area.innerHTML = "";
+            svg.removeAttribute("width");
+            svg.removeAttribute("height");
+            svg.style.width = "100%";
+            svg.style.height = "100%";
+            area.appendChild(svg);
+            panZoom = svgPanZoom(svg, {
+                zoomEnabled: true, controlIconsEnabled: false,
+                fit: true, center: true, minZoom: 0.1, maxZoom: 20,
+                zoomScaleSensitivity: 0.3
+            });
+            document.getElementById("zoom-controls").style.display = "flex";
+        } catch(e) {
+            area.innerHTML = '<div class="error">Render error: ' + e.message + '</div>';
+        }
+    }
+
+    window.zoomIn = function() { if (panZoom) panZoom.zoomIn(); };
+    window.zoomOut = function() { if (panZoom) panZoom.zoomOut(); };
+    window.zoomReset = function() { if (panZoom) { panZoom.resetZoom(); panZoom.resetPan(); panZoom.fit(); panZoom.center(); } };
+
+    // ── Graph loading functions ─────────────────────────────
+
+    function updateStats(dot) {
+        const nodeCount = (dot.match(/"\S+?" \[/g) || []).length;
+        const edgeCount = (dot.match(/->/g) || []).length;
+        document.getElementById("stats").textContent = nodeCount + " entries · " + edgeCount + " edges";
+    }
+
+    function setActiveToolbar(id) {
+        ["btn-full", "btn-orphans"].forEach(b => document.getElementById(b).classList.remove("active"));
+        if (id) document.getElementById(id).classList.add("active");
+        document.getElementById("kind-filter").value = "";
+        document.getElementById("ns-filter").value = "";
+    }
+
+    async function fetchAndRenderGraph(url) {
+        const area = document.getElementById("graph");
+        area.innerHTML = '<div class="loading">Building graph...</div>';
+        try {
+            const res = await fetch(url);
+            const dot = await res.text();
+            if (!res.ok) { area.innerHTML = '<div class="error">' + dot + '</div>'; return; }
+            await renderDot(dot);
+            updateStats(dot);
+        } catch(e) {
+            area.innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+        }
+    }
+
+    window.loadFullGraph = function() {
+        currentEntry = null;
+        setActiveToolbar("btn-full");
+        document.getElementById("graph-tabs").style.display = "none";
+        document.querySelectorAll(".tree-file").forEach(x => x.classList.remove("active"));
+        fetchAndRenderGraph("/api/graph");
+    };
+
+    window.loadOrphans = function() {
+        currentEntry = null;
+        setActiveToolbar("btn-orphans");
+        document.getElementById("graph-tabs").style.display = "none";
+        fetchAndRenderGraph("/api/graph?orphans=true");
+    };
+
+    window.loadByKind = function(kind) {
+        currentEntry = null;
+        setActiveToolbar(null);
+        document.getElementById("kind-filter").value = kind;
+        document.getElementById("graph-tabs").style.display = "none";
+        if (!kind) { loadFullGraph(); return; }
+        fetchAndRenderGraph("/api/graph?kind=" + encodeURIComponent(kind));
+    };
+
+    window.loadByNs = function(ns) {
+        currentEntry = null;
+        setActiveToolbar(null);
+        document.getElementById("ns-filter").value = ns;
+        document.getElementById("graph-tabs").style.display = "none";
+        if (!ns) { loadFullGraph(); return; }
+        fetchAndRenderGraph("/api/graph?ns=" + encodeURIComponent(ns));
+    };
+
+    async function loadEntryGraph(entryId, dir) {
+        setActiveToolbar(null);
+        const tabs = document.getElementById("graph-tabs");
+        tabs.style.display = "flex";
+        tabs.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.dir === dir));
+        let url = "/api/graph?entry=" + encodeURIComponent(entryId);
+        if (dir && dir !== "both") url += "&dir=" + dir;
+        fetchAndRenderGraph(url);
+    }
+
+    window.switchDir = function(btn) {
+        if (!currentEntry) return;
+        currentDir = btn.dataset.dir;
+        loadEntryGraph(currentEntry, currentDir);
+    };
+
+    // ── Legend ──────────────────────────────────────────────
+
+    window.toggleLegend = function() {
+        const legend = document.getElementById("legend");
+        legend.style.display = legend.style.display === "none" ? "block" : "none";
+    };
+
+    function updateLegend() {
+        const kindsEl = document.getElementById("legend-kinds");
+        const edgesEl = document.getElementById("legend-edges");
+
+        const activeKinds = [...new Set(allEntries.map(e => e.kind))].sort();
+        kindsEl.innerHTML = activeKinds.map(k => {
+            const c = KIND_COLORS[k] || {fill: "#e5e7eb", border: "#9ca3af"};
+            return '<div class="legend-item" data-kind="' + k + '">' +
+                '<span class="legend-swatch" style="background:' + c.fill + ';border-color:' + c.border + '"></span>' +
+                k + '</div>';
+        }).join("");
+
+        const categories = Object.keys(CATEGORY_COLORS).sort();
+        edgesEl.innerHTML = categories.map(cat => {
+            const color = CATEGORY_COLORS[cat];
+            return '<div class="legend-item" data-cat="' + cat + '">' +
+                '<span class="legend-line" style="border-top:2px solid ' + color + '"></span>' +
+                cat + '</div>';
+        }).join("");
+    }
+
+    // ── Export ──────────────────────────────────────────────
+
+    window.exportSVG = function() {
+        const svg = document.querySelector('.graph-area svg');
+        if (!svg) return;
+        const blob = new Blob([svg.outerHTML], {type: 'image/svg+xml'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'registry-graph.svg'; a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    window.copyDOT = function() {
+        const dot = document.getElementById('dot-src').textContent;
+        navigator.clipboard.writeText(dot).then(() => {
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = "✓ Copied";
+            setTimeout(() => btn.textContent = orig, 1500);
+        });
+    };
+
+    // ── Init ───────────────────────────────────────────────
+
+    loadEntries().then(() => {
+        updateLegend();
+        loadFullGraph();
+    });
+</script>
+{{ end }}

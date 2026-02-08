@@ -1,0 +1,44 @@
+### HTML page
+GET http://localhost:8090/
+
+### Full DOT graph
+GET http://localhost:8090/api/graph
+
+### All entries
+GET http://localhost:8090/api/entries
+
+### Unique kinds
+GET http://localhost:8090/api/kinds
+
+### Unique namespaces
+GET http://localhost:8090/api/namespaces
+
+### Active edge rules
+GET http://localhost:8090/api/rules
+
+### Filter by kind (HTTP layer)
+GET http://localhost:8090/api/graph?kind=http.*
+
+### Filter by kind (functions)
+GET http://localhost:8090/api/graph?kind=function.lua
+
+### Filter by namespace
+GET http://localhost:8090/api/graph?ns=app
+
+### Focus on entry
+GET http://localhost:8090/api/graph?entry=app:router
+
+### Focus with depth
+GET http://localhost:8090/api/graph?entry=app:router&depth=2
+
+### Focus outgoing only
+GET http://localhost:8090/api/graph?entry=app:router&dir=out
+
+### Focus incoming only
+GET http://localhost:8090/api/graph?entry=app:router&dir=in
+
+### Orphans only
+GET http://localhost:8090/api/graph?orphans=true
+
+### Combined: kind + namespace
+GET http://localhost:8090/api/graph?kind=function.lua&ns=app
