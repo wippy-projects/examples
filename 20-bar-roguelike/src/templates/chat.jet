@@ -15,27 +15,28 @@
         flex-direction: column;
     }
 
-    /* ── Header ─────────────────────────────────── */
-    .header {
-        background: #1a1a2e;
-        padding: 12px 20px;
+    /* ── Character info (in sidebar) ──────────────── */
+    .char-info {
+        padding: 10px 14px;
         border-bottom: 1px solid #2a2a40;
+        background: #14142a;
     }
-    .header h1 {
-        font-size: 18px;
+    .char-info .tavern-name {
+        font-size: 14px;
         color: #ffc83c;
-        margin-bottom: 2px;
+        font-weight: 700;
+        margin-bottom: 4px;
     }
-    .header .subtitle {
-        font-size: 13px;
+    .char-info .subtitle {
+        font-size: 12px;
         color: #78788c;
     }
-    .header .subtitle .char-name {
+    .char-info .subtitle .char-name {
         color: #78c8ff;
         font-weight: 600;
     }
-    .header .char-traits {
-        font-size: 12px;
+    .char-info .char-traits {
+        font-size: 11px;
         color: #555;
         margin-top: 2px;
     }
@@ -136,170 +137,61 @@
 
     /* ── Sidebar ────────────────────────────────── */
     .sidebar {
-        width: 300px;
-        background: #1a1a2e;
+        width: 600px;
+        background: #0d0d18;
         border-left: 1px solid #2a2a40;
-        padding: 16px;
+        padding: 0;
         overflow-y: auto;
         flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        position: relative;
     }
     .sidebar h3 {
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 1px;
         color: #78788c;
-        margin-bottom: 12px;
+        margin: 0;
+        padding: 10px 14px 6px;
     }
 
-    /* ── Top-down bar view ───────────────────────── */
-    .bar-layout {
-        position: relative;
-        margin-bottom: 8px;
-    }
-
-    /* The bar counter — long wooden plank */
-    .bar-counter {
-        background: linear-gradient(90deg, #4a2a0e, #5a3a1a 30%, #6b4420 50%, #5a3a1a 70%, #4a2a0e);
-        border: 2px solid #6b4420;
-        border-radius: 6px;
-        height: 36px;
-        margin: 0 8px;
-        position: relative;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .bar-counter-label {
-        font-size: 9px;
-        color: #a08060;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-    }
-    .bar-counter-items {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 12px;
-        display: flex;
-        gap: 4px;
-    }
-
-    /* Stool row below counter */
-    .bar-stools {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        margin-top: 8px;
-        padding: 0 4px;
-    }
-
-    /* Individual seat — top-down card */
-    .bar-seat {
-        display: flex;
-        align-items: stretch;
-        background: #1e1e30;
-        border: 1px solid #2a2a40;
-        border-radius: 6px;
-        overflow: hidden;
-        transition: border-color 0.2s, background 0.2s;
-        min-height: 44px;
-    }
-    .bar-seat:hover {
-        border-color: #3a3a55;
-        background: #22223a;
-    }
-    .bar-seat.empty {
-        opacity: 0.2;
-        min-height: 28px;
-    }
-
-    /* Color stripe on left edge */
-    .seat-stripe {
-        width: 4px;
-        flex-shrink: 0;
-    }
-
-    /* Stool icon area */
-    .seat-stool {
-        width: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
-        color: #555;
-    }
-
-    /* Main info area */
-    .seat-info {
+    /* ── SVG bar map ──────────────────────────────── */
+    .bar-map {
         flex: 1;
-        min-width: 0;
-        padding: 5px 8px 5px 2px;
+        min-height: 0;
     }
-    .seat-name {
-        font-weight: 700;
+    .bar-map svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background-color: #12121f;
+        border: 8px solid rgb(42, 32, 64);
+    }
+    /* Tooltip */
+    .bar-tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: #1a1a2e;
+        border: 1px solid #ffc83c44;
+        border-radius: 8px;
+        padding: 10px 14px;
         font-size: 12px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.3;
+        color: #ddd;
+        line-height: 1.5;
+        z-index: 50;
+        max-width: 240px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        display: none;
     }
-    .seat-meta {
-        font-size: 10px;
-        color: #888;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.3;
+    .bar-tooltip .tt-name {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 3px;
     }
-    .seat-mood {
-        font-size: 10px;
-        color: #666;
-        font-style: italic;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.3;
-    }
-
-    /* Drunk indicator */
-    .seat-drunk {
-        display: flex;
-        align-items: center;
-        padding: 0 6px;
-        flex-shrink: 0;
-        font-size: 10px;
-    }
-    .drunk-pips {
-        display: flex;
-        gap: 2px;
-    }
-    .drunk-pip {
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: #333;
-    }
-    .drunk-pip.filled { background: #ffc83c; }
-    .drunk-pip.filled.heavy { background: #ff6644; }
-
-    /* Player seat highlight */
-    .bar-seat.player-seat {
-        border-color: rgba(100, 255, 150, 0.25);
-        background: rgba(100, 255, 150, 0.04);
-    }
-    .bar-seat.player-seat .seat-name { color: #64ff96; }
-    .bar-seat.player-seat .seat-stool { color: #64ff96; }
-
-    /* Bartender behind counter */
-    .bar-seat.bartender-seat {
-        border-style: dashed;
-        border-color: #6b4420;
-        background: rgba(107, 68, 32, 0.1);
-        margin: 0 8px 4px;
-    }
+    .bar-tooltip .tt-meta { color: #aaa; font-size: 11px; }
+    .bar-tooltip .tt-mood { color: #888; font-style: italic; font-size: 11px; margin-top: 2px; }
+    .bar-tooltip .tt-drunk { margin-top: 3px; font-size: 11px; color: #ffc83c; }
 
     .sidebar .commands {
         margin-top: 24px;
@@ -364,12 +256,6 @@
 {{ end }}
 
 {{ block body() }}
-<div class="header">
-    <h1>&#x2B25; THE RUSTY FLAGON</h1>
-    <div class="subtitle" id="header-subtitle">Connecting...</div>
-    <div class="char-traits" id="header-traits"></div>
-</div>
-
 <div class="main">
     <div class="chat-area">
         <div id="messages"></div>
@@ -382,15 +268,13 @@
     </div>
 
     <div class="sidebar">
-        <h3>The Rusty Flagon &mdash; top view</h3>
-        <div class="bar-layout">
-            <div id="bartender-area"></div>
-            <div class="bar-counter">
-                <span class="bar-counter-items">&#x1F37A;&#x1F37B;&#x1F943;</span>
-                <span class="bar-counter-label">&mdash; bar counter &mdash;</span>
-            </div>
-            <div class="bar-stools" id="npc-list"></div>
+        <div class="char-info">
+            <div class="tavern-name">&#x2B25; THE RUSTY FLAGON</div>
+            <div class="subtitle" id="header-subtitle">Connecting...</div>
+            <div class="char-traits" id="header-traits"></div>
         </div>
+        <div class="bar-map" id="bar-map"></div>
+        <div class="bar-tooltip" id="bar-tooltip"></div>
 
         <div class="commands">
             <h3>Commands</h3>
@@ -431,7 +315,8 @@
     var sendBtn = document.getElementById('send-btn');
     var subtitleEl = document.getElementById('header-subtitle');
     var traitsEl = document.getElementById('header-traits');
-    var npcListEl = document.getElementById('npc-list');
+    var barMapEl = document.getElementById('bar-map');
+    var tooltipEl = document.getElementById('bar-tooltip');
     var langDisplay = document.getElementById('lang-display');
     var overlay = document.getElementById('reconnect-overlay');
     var overlayMsg = document.getElementById('reconnect-msg');
@@ -549,34 +434,59 @@
         traitsEl.textContent = c.race + ' \u00B7 ' + c.occupation + ' \u00B7 ' + c.drunk_level + ' \u00B7 ' + c.mood;
     }
 
-    function drunkPips(level) {
-        var n = 0;
-        if (!level) return '';
-        var l = level.toLowerCase();
-        if (l === 'sober') n = 0;
-        else if (l === 'mildly tipsy' || l === 'tipsy') n = 1;
-        else if (l === 'drunk') n = 2;
-        else if (l === 'very drunk' || l === 'hammered') n = 3;
-        var html = '<div class="drunk-pips">';
-        for (var i = 0; i < 3; i++) {
-            var cls = i < n ? (n >= 3 ? 'drunk-pip filled heavy' : 'drunk-pip filled') : 'drunk-pip';
-            html += '<div class="' + cls + '"></div>';
-        }
-        html += '</div>';
-        return html;
+    // ── SVG tavern map renderer ──────────────────
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+    var TOTAL_STOOLS = 8;
+
+    function svgEl(tag, attrs) {
+        var el = document.createElementNS(SVG_NS, tag);
+        for (var k in attrs) el.setAttribute(k, attrs[k]);
+        return el;
+    }
+    function svgText(x, y, text, attrs) {
+        var el = svgEl('text', Object.assign({
+            x: x, y: y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+            'font-family': 'sans-serif'
+        }, attrs));
+        el.textContent = text;
+        return el;
     }
 
-    function renderSeat(name, color, meta, mood, drunkLevel, stoolIcon, extraClass) {
-        return '<div class="bar-seat ' + (extraClass || '') + '">'
-            + '<div class="seat-stripe" style="background:' + color + '"></div>'
-            + '<div class="seat-stool">' + stoolIcon + '</div>'
-            + '<div class="seat-info">'
-            + '<div class="seat-name" style="color:' + color + '">' + esc(name) + '</div>'
-            + (meta ? '<div class="seat-meta">' + esc(meta) + '</div>' : '')
-            + (mood ? '<div class="seat-mood">' + esc(mood) + '</div>' : '')
-            + '</div>'
-            + '<div class="seat-drunk">' + drunkPips(drunkLevel) + '</div>'
-            + '</div>';
+    function drunkLevel(level) {
+        if (!level) return 0;
+        var l = level.toLowerCase();
+        if (l === 'tipsy' || l === 'mildly tipsy') return 1;
+        if (l === 'drunk') return 2;
+        if (l === 'very drunk' || l === 'hammered') return 3;
+        return 0;
+    }
+    function drunkLabel(n) {
+        return ['sober', 'tipsy', 'drunk', 'wasted'][n] || 'sober';
+    }
+
+    function showTooltip(evt, data) {
+        var r = barMapEl.getBoundingClientRect();
+        var x = evt.clientX - r.left + 16;
+        var y = evt.clientY - r.top - 10;
+        if (x + 220 > r.width) x = evt.clientX - r.left - 220;
+        var html = '<div class="tt-name" style="color:' + data.color + '">' + esc(data.name) + '</div>'
+            + '<div class="tt-meta">' + esc(data.meta) + '</div>';
+        if (data.mood) html += '<div class="tt-mood">' + esc(data.mood) + '</div>';
+        if (data.drunk > 0) html += '<div class="tt-drunk">' + drunkLabel(data.drunk) + ' ' + '\u{1F37A}'.repeat(data.drunk) + '</div>';
+        tooltipEl.innerHTML = html;
+        tooltipEl.style.left = x + 'px';
+        tooltipEl.style.top = y + 'px';
+        tooltipEl.style.display = 'block';
+    }
+
+    function hideTooltip() { tooltipEl.style.display = 'none'; }
+
+    function addHoverTarget(svg, shape, attrs, data) {
+        var hit = svgEl(shape, Object.assign({}, attrs, { fill: 'transparent', cursor: 'pointer' }));
+        hit.addEventListener('mouseenter', function(e) { showTooltip(e, data); });
+        hit.addEventListener('mousemove', function(e) { showTooltip(e, data); });
+        hit.addEventListener('mouseleave', hideTooltip);
+        svg.appendChild(hit);
     }
 
     function updateNpcSidebar(npcList) {
@@ -584,52 +494,306 @@
         npcs = npcList;
         npcColors = {};
 
-        var bartenderHtml = '';
-        var stoolsHtml = '';
+        // ── Dimensions ──
+        var W = 570, H = 440;
+        var wallT = 8;
 
-        // Player seat (always first at the bar)
-        if (character) {
-            var pMeta = character.race + ' \u00B7 ' + character.occupation;
-            stoolsHtml += renderSeat(
-                'You (' + character.name + ')', '#64ff96',
-                pMeta, character.mood, character.drunk_level, '\u{1F9D1}', 'player-seat'
-            );
-        }
+        // Bar counter: U-shape
+        var barTop = 60, barH = 30, barLeft = 60, barRight = W - 60;
+        var barArmH = 90; // how far the U arms extend down
+        var barArmW = 30;
 
-        // NPC seats
+        // Stool positions along the front (bottom) of the counter
+        var stoolY = barTop + barH + 36;
+        var stoolStartX = barLeft + barArmW + 20;
+        var stoolEndX = barRight - barArmW - 20;
+        var stoolSpacing = (stoolEndX - stoolStartX) / (TOTAL_STOOLS - 1);
+
+        // Behind-bar area
+        var behindBarY = barTop - 28;
+
+        // Furniture zone (bottom half)
+        var furnitureY = stoolY + 70;
+
+        var bartenders = [], patrons = [];
         for (var i = 0; i < npcList.length; i++) {
             var npc = npcList[i];
             npcColors[npc.id] = npc.color;
+            if (npc.role === 'bartender' || npc.role === 'barkeep') bartenders.push(npc);
+            else patrons.push(npc);
+        }
 
-            var isBartender = (npc.role === 'bartender' || npc.role === 'barkeep');
-            var meta = npc.race ? (npc.race + ' \u00B7 ' + (npc.occupation || npc.role)) : npc.role;
-            var icon = isBartender ? '\u{1F37A}' : '\u{1F9D1}';
+        // Occupant list: player first, then patrons
+        var occupants = [];
+        if (character) {
+            occupants.push({
+                name: character.name, color: '#64ff96',
+                meta: (character.race || '') + ' \u00B7 ' + (character.occupation || ''),
+                mood: character.mood || '', drunk: drunkLevel(character.drunk_level), isPlayer: true
+            });
+        }
+        for (var p = 0; p < patrons.length; p++) {
+            occupants.push({
+                name: patrons[p].name, color: patrons[p].color,
+                meta: (patrons[p].race || patrons[p].role) + ' \u00B7 ' + (patrons[p].occupation || patrons[p].role),
+                mood: patrons[p].mood || '', drunk: drunkLevel(patrons[p].drunk_level), isPlayer: false
+            });
+        }
 
-            if (isBartender) {
-                bartenderHtml += renderSeat(
-                    npc.name, npc.color, meta, npc.mood, npc.drunk_level, icon, 'bartender-seat'
-                );
+        var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'xMidYMin meet' });
+
+        // ── Defs ──
+        var defs = svgEl('defs', {});
+        // Wood gradient
+        var grad = svgEl('linearGradient', { id: 'wood', x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
+        var woodStops = [[0,'#3d220c'],[0.15,'#5a3a1a'],[0.3,'#6b4420'],[0.5,'#5a3a1a'],[0.7,'#6b4420'],[0.85,'#5a3a1a'],[1,'#3d220c']];
+        for (var ws = 0; ws < woodStops.length; ws++) {
+            grad.appendChild(svgEl('stop', { offset: woodStops[ws][0], 'stop-color': woodStops[ws][1] }));
+        }
+        defs.appendChild(grad);
+        // Vertical wood
+        var vGrad = svgEl('linearGradient', { id: 'woodV', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+        for (var vw = 0; vw < woodStops.length; vw++) {
+            vGrad.appendChild(svgEl('stop', { offset: woodStops[vw][0], 'stop-color': woodStops[vw][1] }));
+        }
+        defs.appendChild(vGrad);
+        // Glow filter
+        var glow = svgEl('filter', { id: 'glow', x: '-50%', y: '-50%', width: '200%', height: '200%' });
+        glow.appendChild(svgEl('feGaussianBlur', { stdDeviation: '4', result: 'blur' }));
+        var merge = svgEl('feMerge', {});
+        merge.appendChild(svgEl('feMergeNode', { 'in': 'blur' }));
+        merge.appendChild(svgEl('feMergeNode', { 'in': 'SourceGraphic' }));
+        glow.appendChild(merge);
+        defs.appendChild(glow);
+        // Lantern glow
+        var lGlow = svgEl('radialGradient', { id: 'lantern', cx: '50%', cy: '50%', r: '50%' });
+        lGlow.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#ffc83c', 'stop-opacity': '0.25' }));
+        lGlow.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#ffc83c', 'stop-opacity': '0' }));
+        defs.appendChild(lGlow);
+        // Fire glow
+        var fGlow = svgEl('radialGradient', { id: 'fireGlow', cx: '50%', cy: '50%', r: '50%' });
+        fGlow.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#ff6622', 'stop-opacity': '0.2' }));
+        fGlow.appendChild(svgEl('stop', { offset: '60%', 'stop-color': '#ff4400', 'stop-opacity': '0.06' }));
+        fGlow.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#ff4400', 'stop-opacity': '0' }));
+        defs.appendChild(fGlow);
+        svg.appendChild(defs);
+
+        // ══════ FLOOR ══════
+        svg.appendChild(svgEl('rect', { x: 0, y: 0, width: W, height: H, fill: '#12121f', rx: 4 }));
+        // Floorboard lines
+        for (var fb = 0; fb < H; fb += 22) {
+            svg.appendChild(svgEl('line', { x1: 0, y1: fb, x2: W, y2: fb, stroke: '#181828', 'stroke-width': 0.5 }));
+        }
+        // Vertical plank seams
+        for (var vp = 40; vp < W; vp += 55) {
+            var yOff = (vp % 3) * 11;
+            svg.appendChild(svgEl('line', { x1: vp, y1: yOff, x2: vp, y2: H, stroke: '#151525', 'stroke-width': 0.3 }));
+        }
+
+        // ══════ WALLS ══════
+        // Door frame
+        svg.appendChild(svgEl('rect', { x: W - wallT - 2, y: H * 0.4, width: wallT + 2, height: 4, fill: '#6b4420' }));
+        svg.appendChild(svgEl('rect', { x: W - wallT - 2, y: H * 0.6 - 4, width: wallT + 2, height: 4, fill: '#6b4420' }));
+        // Door label
+        svg.appendChild(svgText(W - 4, H * 0.5, 'EXIT', { fill: '#555', 'font-size': '8', 'letter-spacing': '1', 'writing-mode': 'tb' }));
+
+        // ══════ FIREPLACE (left wall) ══════
+        var fpX = wallT, fpY = H * 0.55, fpW = 40, fpH = 60;
+        svg.appendChild(svgEl('rect', { x: fpX, y: fpY, width: fpW, height: fpH, fill: '#1a1210', stroke: '#3d2a1a', 'stroke-width': 2, rx: 2 }));
+        // Fire glow circle
+        svg.appendChild(svgEl('circle', { cx: fpX + fpW / 2, cy: fpY + fpH / 2, r: 50, fill: 'url(#fireGlow)' }));
+        // Fire
+        svg.appendChild(svgEl('ellipse', { cx: fpX + fpW/2, cy: fpY + fpH - 12, rx: 10, ry: 14, fill: '#ff4400', opacity: 0.5 }));
+        svg.appendChild(svgEl('ellipse', { cx: fpX + fpW/2, cy: fpY + fpH - 16, rx: 6, ry: 10, fill: '#ff8822', opacity: 0.6 }));
+        svg.appendChild(svgEl('ellipse', { cx: fpX + fpW/2, cy: fpY + fpH - 18, rx: 3, ry: 6, fill: '#ffcc44', opacity: 0.7 }));
+        svg.appendChild(svgText(fpX + fpW/2, fpY - 6, 'FIREPLACE', { fill: '#554433', 'font-size': '7', 'letter-spacing': '1' }));
+
+        // ══════ BOTTLE SHELVES (back wall) ══════
+        var shelfY1 = wallT + 4, shelfY2 = wallT + 22;
+        // Two shelves
+        svg.appendChild(svgEl('rect', { x: barLeft, y: shelfY1, width: barRight - barLeft, height: 14, rx: 2, fill: '#2a1a0a', stroke: '#3d2610', 'stroke-width': 1 }));
+        svg.appendChild(svgEl('rect', { x: barLeft + 20, y: shelfY2, width: barRight - barLeft - 40, height: 14, rx: 2, fill: '#2a1a0a', stroke: '#3d2610', 'stroke-width': 1 }));
+        // Bottles on top shelf
+        var bottleColors = ['#cc3333','#33aa33','#ddaa22','#3388cc','#aa33cc','#cc7733','#33cccc','#cc3399','#88cc33','#6644cc','#cc6644','#3366cc'];
+        for (var b = 0; b < bottleColors.length; b++) {
+            var bx = barLeft + 10 + b * ((barRight - barLeft - 20) / bottleColors.length);
+            var bh = 8 + Math.random() * 4;
+            svg.appendChild(svgEl('rect', { x: bx, y: shelfY1 + 14 - bh, width: 5, height: bh, rx: 1, fill: bottleColors[b], opacity: 0.7 }));
+            svg.appendChild(svgEl('rect', { x: bx + 1, y: shelfY1 + 14 - bh - 3, width: 3, height: 3, rx: 1, fill: bottleColors[b], opacity: 0.4 }));
+        }
+        // Bottles on lower shelf
+        for (var b2 = 0; b2 < 8; b2++) {
+            var bx2 = barLeft + 28 + b2 * ((barRight - barLeft - 56) / 8);
+            svg.appendChild(svgEl('rect', { x: bx2, y: shelfY2 + 4, width: 6, height: 9, rx: 1, fill: bottleColors[b2 + 4] || '#996633', opacity: 0.6 }));
+        }
+
+        // ══════ U-SHAPED BAR COUNTER ══════
+        // Shadow
+        svg.appendChild(svgEl('rect', { x: barLeft, y: barTop + 3, width: barRight - barLeft, height: barH, rx: 4, fill: 'rgba(0,0,0,0.25)' }));
+        // Top bar (horizontal)
+        svg.appendChild(svgEl('rect', { x: barLeft, y: barTop, width: barRight - barLeft, height: barH, rx: 4, fill: 'url(#wood)', stroke: '#6b4420', 'stroke-width': 1.5 }));
+        // Left arm
+        svg.appendChild(svgEl('rect', { x: barLeft, y: barTop + barH - 4, width: barArmW, height: barArmH, rx: 3, fill: 'url(#woodV)', stroke: '#6b4420', 'stroke-width': 1.5 }));
+        // Right arm
+        svg.appendChild(svgEl('rect', { x: barRight - barArmW, y: barTop + barH - 4, width: barArmW, height: barArmH, rx: 3, fill: 'url(#woodV)', stroke: '#6b4420', 'stroke-width': 1.5 }));
+        // Counter edge highlights
+        svg.appendChild(svgEl('line', { x1: barLeft + 4, y1: barTop + 1, x2: barRight - 4, y2: barTop + 1, stroke: 'rgba(255,200,120,0.12)', 'stroke-width': 1 }));
+
+        // Mugs and items on counter
+        var mugPositions = [barLeft + 50, barLeft + 120, W/2 - 20, W/2 + 40, barRight - 130, barRight - 60];
+        for (var m = 0; m < mugPositions.length; m++) {
+            var mx = mugPositions[m], my = barTop + barH/2;
+            if (m % 3 === 0) {
+                // Mug (circle top-down)
+                svg.appendChild(svgEl('circle', { cx: mx, cy: my, r: 5, fill: '#5a4020', stroke: '#7a5a30', 'stroke-width': 1 }));
+                svg.appendChild(svgEl('circle', { cx: mx, cy: my, r: 2.5, fill: '#c8a040', opacity: 0.5 }));
+            } else if (m % 3 === 1) {
+                // Plate
+                svg.appendChild(svgEl('ellipse', { cx: mx, cy: my, rx: 6, ry: 4, fill: 'none', stroke: '#444', 'stroke-width': 0.8 }));
             } else {
-                stoolsHtml += renderSeat(
-                    npc.name, npc.color, meta, npc.mood, npc.drunk_level, icon, ''
-                );
+                // Candle
+                svg.appendChild(svgEl('circle', { cx: mx, cy: my, r: 2, fill: '#ddd', opacity: 0.5 }));
+                svg.appendChild(svgEl('circle', { cx: mx, cy: my, r: 8, fill: 'url(#lantern)' }));
             }
         }
 
-        // Empty stools
-        var occupied = (character ? 1 : 0) + npcList.filter(function(n) {
-            return n.role !== 'bartender' && n.role !== 'barkeep';
-        }).length;
-        for (var j = occupied; j < 6; j++) {
-            stoolsHtml += '<div class="bar-seat empty">'
-                + '<div class="seat-stripe" style="background:#333"></div>'
-                + '<div class="seat-stool">\u25CB</div>'
-                + '<div class="seat-info"><div class="seat-name">empty stool</div></div>'
-                + '</div>';
+        // Counter label
+        svg.appendChild(svgText(W/2, barTop + barH/2 + 1, 'BAR', { fill: '#7a5830', 'font-size': '10', 'letter-spacing': '3', 'font-weight': 'bold' }));
+
+        // ══════ BARTENDER(S) ══════
+        for (var bt = 0; bt < bartenders.length; bt++) {
+            var bNpc = bartenders[bt];
+            var btx = W/2 + (bt - (bartenders.length-1)/2) * 70;
+            var bty = behindBarY;
+
+            // Shadow
+            svg.appendChild(svgEl('ellipse', { cx: btx, cy: bty + 18, rx: 14, ry: 4, fill: 'rgba(0,0,0,0.3)' }));
+            // Body glow
+            svg.appendChild(svgEl('circle', { cx: btx, cy: bty, r: 22, fill: bNpc.color, opacity: 0.08, filter: 'url(#glow)' }));
+            // Body
+            svg.appendChild(svgEl('circle', { cx: btx, cy: bty, r: 16, fill: '#1a1a2e', stroke: bNpc.color, 'stroke-width': 2.5 }));
+            // Initial
+            svg.appendChild(svgText(btx, bty, bNpc.name.charAt(0), { fill: bNpc.color, 'font-size': '14', 'font-weight': 'bold' }));
+            // Name
+            svg.appendChild(svgText(btx, bty + 26, bNpc.name, { fill: bNpc.color, 'font-size': '9', opacity: '0.9' }));
+            // Role tag
+            svg.appendChild(svgEl('rect', { x: btx - 22, y: bty + 31, width: 44, height: 11, rx: 3, fill: bNpc.color, opacity: 0.15 }));
+            svg.appendChild(svgText(btx, bty + 37, 'bartender', { fill: bNpc.color, 'font-size': '7', opacity: '0.7' }));
+
+            addHoverTarget(svg, 'circle', { cx: btx, cy: bty, r: 20 }, {
+                name: bNpc.name, color: bNpc.color,
+                meta: (bNpc.race || 'bartender') + ' \u00B7 ' + (bNpc.occupation || 'bartender'),
+                mood: bNpc.mood, drunk: drunkLevel(bNpc.drunk_level)
+            });
         }
 
-        document.getElementById('bartender-area').innerHTML = bartenderHtml;
-        npcListEl.innerHTML = stoolsHtml;
+        // ══════ LANTERNS on walls ══════
+        var lanternSpots = [[30, barTop], [W - 30, barTop], [30, H - 40], [W/2, H - 20]];
+        for (var ln = 0; ln < lanternSpots.length; ln++) {
+            var lx = lanternSpots[ln][0], ly = lanternSpots[ln][1];
+            svg.appendChild(svgEl('circle', { cx: lx, cy: ly, r: 35, fill: 'url(#lantern)' }));
+            svg.appendChild(svgEl('circle', { cx: lx, cy: ly, r: 3, fill: '#ffc83c', opacity: 0.6 }));
+            svg.appendChild(svgEl('circle', { cx: lx, cy: ly, r: 1.5, fill: '#fff', opacity: 0.4 }));
+        }
+
+        // ══════ STOOLS along bar ══════
+        for (var si = 0; si < TOTAL_STOOLS; si++) {
+            var sx = stoolStartX + si * stoolSpacing;
+            var sy = stoolY;
+            var occ = si < occupants.length ? occupants[si] : null;
+
+            if (occ) {
+                // Shadow
+                svg.appendChild(svgEl('ellipse', { cx: sx, cy: sy + 22, rx: 16, ry: 5, fill: 'rgba(0,0,0,0.3)' }));
+                // Glow
+                svg.appendChild(svgEl('circle', { cx: sx, cy: sy, r: 26, fill: occ.color, opacity: 0.06, filter: 'url(#glow)' }));
+                // Stool (underneath)
+                svg.appendChild(svgEl('circle', { cx: sx, cy: sy, r: 18, fill: '#18182a', stroke: '#2a2a40', 'stroke-width': 1 }));
+                // Character body
+                svg.appendChild(svgEl('circle', { cx: sx, cy: sy, r: 16, fill: '#1a1a2e', stroke: occ.color, 'stroke-width': 2.5 }));
+                // Initial
+                svg.appendChild(svgText(sx, sy, occ.isPlayer ? '\u25C9' : occ.name.charAt(0), {
+                    fill: occ.color, 'font-size': '15', 'font-weight': 'bold'
+                }));
+                // Name
+                svg.appendChild(svgText(sx, sy + 28, occ.isPlayer ? 'You' : occ.name.split(' ')[0], {
+                    fill: occ.color, 'font-size': '9', opacity: '0.9'
+                }));
+                // Full name (second line if space)
+                if (!occ.isPlayer && occ.name.split(' ').length > 1) {
+                    svg.appendChild(svgText(sx, sy + 37, occ.name.split(' ').slice(1).join(' '), {
+                        fill: occ.color, 'font-size': '7', opacity: '0.6'
+                    }));
+                }
+                // Drunk pips
+                if (occ.drunk > 0) {
+                    for (var dp = 0; dp < 3; dp++) {
+                        svg.appendChild(svgEl('circle', {
+                            cx: sx - 5 + dp * 5, cy: sy + (occ.name.split(' ').length > 1 && !occ.isPlayer ? 44 : 37),
+                            r: 2, fill: dp < occ.drunk ? (occ.drunk >= 3 ? '#ff6644' : '#ffc83c') : '#2a2a40'
+                        }));
+                    }
+                }
+                // Player glow ring
+                if (occ.isPlayer) {
+                    svg.appendChild(svgEl('circle', {
+                        cx: sx, cy: sy, r: 20,
+                        fill: 'none', stroke: '#64ff96', 'stroke-width': 1, 'stroke-dasharray': '4,3', opacity: 0.4
+                    }));
+                }
+                addHoverTarget(svg, 'circle', { cx: sx, cy: sy, r: 22 }, occ);
+            } else {
+                // Empty stool
+                svg.appendChild(svgEl('circle', { cx: sx, cy: sy, r: 10, fill: '#16162a', stroke: '#252540', 'stroke-width': 1 }));
+                svg.appendChild(svgEl('circle', { cx: sx, cy: sy, r: 6, fill: 'none', stroke: '#222238', 'stroke-width': 0.5, 'stroke-dasharray': '2,2' }));
+            }
+        }
+
+        // ══════ TABLES in the room ══════
+        var tables = [
+            { x: 120, y: furnitureY + 30, r: 22, chairs: 4 },
+            { x: W/2, y: furnitureY + 60, r: 26, chairs: 5 },
+            { x: W - 140, y: furnitureY + 20, r: 20, chairs: 3 },
+        ];
+        for (var ti = 0; ti < tables.length; ti++) {
+            var t = tables[ti];
+            // Table shadow
+            svg.appendChild(svgEl('ellipse', { cx: t.x + 2, cy: t.y + 2, rx: t.r, ry: t.r * 0.7, fill: 'rgba(0,0,0,0.2)' }));
+            // Table top
+            svg.appendChild(svgEl('ellipse', { cx: t.x, cy: t.y, rx: t.r, ry: t.r * 0.7, fill: '#3d2a14', stroke: '#5a3a1a', 'stroke-width': 1.5 }));
+            // Highlight
+            svg.appendChild(svgEl('ellipse', { cx: t.x, cy: t.y - 2, rx: t.r * 0.6, ry: t.r * 0.35, fill: 'none', stroke: 'rgba(255,200,120,0.06)', 'stroke-width': 1 }));
+            // Items on table
+            svg.appendChild(svgEl('circle', { cx: t.x - 6, cy: t.y - 2, r: 3, fill: '#5a4020', stroke: '#7a5a30', 'stroke-width': 0.5 }));
+            svg.appendChild(svgEl('circle', { cx: t.x + 5, cy: t.y + 1, r: 2, fill: '#ddd', opacity: 0.3 }));
+            svg.appendChild(svgEl('circle', { cx: t.x + 5, cy: t.y + 1, r: 8, fill: 'url(#lantern)' }));
+            // Chairs
+            for (var ci = 0; ci < t.chairs; ci++) {
+                var angle = (Math.PI * 2 / t.chairs) * ci - Math.PI / 2;
+                var cx2 = t.x + Math.cos(angle) * (t.r + 14);
+                var cy2 = t.y + Math.sin(angle) * (t.r * 0.7 + 10);
+                svg.appendChild(svgEl('rect', {
+                    x: cx2 - 5, y: cy2 - 5, width: 10, height: 10, rx: 2,
+                    fill: '#1e1a14', stroke: '#3a3020', 'stroke-width': 0.8
+                }));
+            }
+        }
+
+        // ══════ KEGS (near left arm of bar) ══════
+        var kegX = barLeft - 20, kegY = barTop + barH + 20;
+        svg.appendChild(svgEl('ellipse', { cx: kegX, cy: kegY, rx: 12, ry: 8, fill: '#3d2a14', stroke: '#5a3a1a', 'stroke-width': 1 }));
+        svg.appendChild(svgEl('ellipse', { cx: kegX, cy: kegY - 12, rx: 12, ry: 8, fill: '#3d2a14', stroke: '#5a3a1a', 'stroke-width': 1 }));
+        svg.appendChild(svgText(kegX, kegY + 14, 'kegs', { fill: '#443322', 'font-size': '7' }));
+
+        // ══════ SIGN on top wall ══════
+        var signW = 160, signH = 14, signX = W/2 - signW/2, signY = wallT + 1;
+        svg.appendChild(svgEl('rect', { x: signX, y: signY, width: signW, height: signH, rx: 2, fill: '#2a1a0a', stroke: '#5a3a1a', 'stroke-width': 1 }));
+        svg.appendChild(svgText(W/2, signY + signH/2 + 1, '\u2B25 THE RUSTY FLAGON \u2B25', {
+            fill: '#ffc83c', 'font-size': '8', 'letter-spacing': '1.5', 'font-weight': 'bold'
+        }));
+
+        barMapEl.innerHTML = '';
+        barMapEl.appendChild(svg);
     }
 
     function appendNpcMessage(msg) {
