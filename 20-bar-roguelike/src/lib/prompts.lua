@@ -303,6 +303,174 @@ RULES:
     )
 end
 
+local function build_npc_reaction_prompt(npc, reacting_to_name, language)
+    local d = npc.data
+    local lang_rule = ""
+    if language and language ~= "English" then
+        lang_rule = "\nYou MUST speak entirely in " .. language .. "."
+    end
+
+    local role_desc
+    if npc.role == "bartender" then
+        role_desc = "You are the BARTENDER of The Rusty Flagon. You're behind the bar, serving drinks and keeping order."
+    else
+        role_desc = "You are a patron at The Rusty Flagon, sitting nearby."
+    end
+
+    return string.format([=[%s
+You ARE this character — never break character, never acknowledge you are an AI.
+
+CHARACTER SHEET:
+- Name: %s
+- Race: %s
+- Occupation: %s
+- Personality: %s
+- Current state: %s (%s)
+- Current mood: %s
+- Speech style: %s
+- Quirk: %s
+- Secret: %s (don't reveal easily)
+
+%s just said something in the tavern and you want to react.
+
+RULES:
+1. Stay in character at ALL times.
+2. Keep your response SHORT — 1-2 sentences max.
+3. Address %s BY NAME in your response — you're talking to them, not the room.
+4. React naturally: agree, disagree, joke, tease, challenge, warn, or share your own take.
+5. Show your personality and speech style.
+6. Do NOT prefix your response with your name — the interface already shows who is speaking.%s]=],
+        role_desc,
+        npc.name,
+        d.race or "unknown",
+        d.occupation or "unknown",
+        d.personality or "neutral",
+        d.drunk_level or "sober", d.drunk_desc or "sober",
+        d.mood or "neutral",
+        d.speech_style or "normal",
+        d.quirk or "none",
+        d.secret or "none",
+        reacting_to_name,
+        reacting_to_name,
+        lang_rule
+    )
+end
+
+local function build_main_reaction_prompt(c, reacting_to_name, language)
+    local lang_rule = ""
+    if language and language ~= "English" then
+        lang_rule = "\nYou MUST speak entirely in " .. language .. "."
+    end
+
+    return string.format([=[You are a patron at The Rusty Flagon, sitting at the bar.
+You ARE this character — never break character, never acknowledge you are an AI.
+
+CHARACTER SHEET:
+- Name: %s
+- Race: %s
+- Occupation: %s
+- Personality: %s
+- Current state: %s (%s)
+- Current mood: %s
+- Speech style: %s
+- Quirk: %s
+- Secret: %s (don't reveal easily)
+
+%s just said something nearby and you want to react.
+
+RULES:
+1. Stay in character at ALL times.
+2. Keep your response SHORT — 1-2 sentences max.
+3. Address %s BY NAME — you're talking directly to them.
+4. React naturally: agree, disagree, joke, tease, or share your own take.
+5. Show your personality and speech style.
+6. Do NOT prefix your response with your name — the interface already shows who is speaking.%s]=],
+        c.name, c.race, c.occupation, c.personality,
+        c.drunk_level, c.drunk_desc,
+        c.mood, c.speech_style, c.quirk, c.secret,
+        reacting_to_name,
+        reacting_to_name,
+        lang_rule
+    )
+end
+
+local function build_farewell_prompt(npc, departing_name, language)
+    local d = npc.data
+    local lang_rule = ""
+    if language and language ~= "English" then
+        lang_rule = "\nYou MUST speak entirely in " .. language .. "."
+    end
+
+    local role_desc
+    if npc.role == "bartender" then
+        role_desc = "You are the BARTENDER of The Rusty Flagon. You're behind the bar."
+    else
+        role_desc = "You are a patron at The Rusty Flagon, sitting nearby."
+    end
+
+    return string.format([=[%s
+You ARE this character — never break character, never acknowledge you are an AI.
+
+CHARACTER SHEET:
+- Name: %s
+- Race: %s
+- Personality: %s
+- Current state: %s (%s)
+- Speech style: %s
+
+%s is leaving the tavern. Say goodbye to them!
+
+RULES:
+1. Stay in character.
+2. Keep it SHORT — 1 sentence max.
+3. Address %s BY NAME.
+4. Be natural: wave, shout goodbye, make a joke, give a warning, or just grunt.
+5. Do NOT prefix your response with your name.%s]=],
+        role_desc,
+        npc.name,
+        d.race or "unknown",
+        d.personality or "neutral",
+        d.drunk_level or "sober", d.drunk_desc or "sober",
+        d.speech_style or "normal",
+        departing_name,
+        departing_name,
+        lang_rule
+    )
+end
+
+local function build_main_farewell_prompt(c, departing_name, language)
+    local lang_rule = ""
+    if language and language ~= "English" then
+        lang_rule = "\nYou MUST speak entirely in " .. language .. "."
+    end
+
+    return string.format([=[You are a patron at The Rusty Flagon, sitting at the bar.
+You ARE this character — never break character, never acknowledge you are an AI.
+
+CHARACTER SHEET:
+- Name: %s
+- Race: %s
+- Personality: %s
+- Current state: %s (%s)
+- Speech style: %s
+
+%s is leaving the tavern. Say goodbye to them!
+
+RULES:
+1. Stay in character.
+2. Keep it SHORT — 1 sentence max.
+3. Address %s BY NAME.
+4. Be natural: wave, shout goodbye, make a joke, or just grunt.
+5. Do NOT prefix your response with your name.%s]=],
+        c.name, c.race, c.personality,
+        c.drunk_level, c.drunk_desc,
+        c.speech_style,
+        departing_name,
+        departing_name,
+        lang_rule
+    )
+end
+
 local function build_llm_messages(chat_log, my_npc_id)
     local llm_msgs = {}
     for _, entry in ipairs(chat_log) do
@@ -324,5 +492,9 @@ return {
     build_interjection_prompt = build_interjection_prompt,
     build_addressed_prompt = build_addressed_prompt,
     build_main_interjection_prompt = build_main_interjection_prompt,
+    build_npc_reaction_prompt = build_npc_reaction_prompt,
+    build_main_reaction_prompt = build_main_reaction_prompt,
+    build_farewell_prompt = build_farewell_prompt,
+    build_main_farewell_prompt = build_main_farewell_prompt,
     build_llm_messages = build_llm_messages,
 }

@@ -1,6 +1,7 @@
 local logger = require("logger")
 local registry = require("registry")
 local time = require("time")
+local events = require("events")
 
 -- ════════════════════════════════════════════════════════════
 -- Wandering NPC pool — characters that drift in and out
@@ -159,6 +160,7 @@ local function add_wanderer(w)
 
     active_wanderers[w.id_suffix] = true
     logger:info("wanderer entered the bar", { name = w.name })
+    events.send("bar.npc", "arrival", "/npcs/" .. w.id_suffix, { name = w.name, id = entry_id })
     return true
 end
 
@@ -182,6 +184,7 @@ local function remove_wanderer(w)
 
     active_wanderers[w.id_suffix] = nil
     logger:info("wanderer left the bar", { name = w.name })
+    events.send("bar.npc", "departure", "/npcs/" .. w.id_suffix, { name = w.name, id = entry_id })
     return true
 end
 
@@ -235,12 +238,33 @@ end
 -- Main loop
 -- ════════════════════════════════════════════════════════════
 
+local function sync_from_registry()
+    local entries, err = registry.find({ kind = "registry.entry" })
+    if err then return end
+    local existing = {}
+    for _, entry in ipairs(entries) do
+        if entry.meta and entry.meta.type == "bar.npc" and entry.meta.dynamic == "true" then
+            existing[entry.id] = true
+        end
+    end
+    for _, w in ipairs(WANDERERS) do
+        local entry_id = "app:wanderer." .. w.id_suffix
+        if existing[entry_id] then
+            active_wanderers[w.id_suffix] = true
+            logger:info("recovered existing wanderer", { name = w.name })
+        end
+    end
+end
+
 local function main()
     local events = process.events()
     process.registry.register("npc_manager")
     logger:info("npc manager ready")
 
     math.randomseed(math.floor(os.time()) + 42)
+
+    -- Recover state from registry (handles process restarts)
+    sync_from_registry()
 
     -- Start with one wanderer after a short delay
     local startup_delay = time.after("5s")

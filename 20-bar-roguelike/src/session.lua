@@ -2,6 +2,7 @@ local json = require("json")
 local logger = require("logger")
 local time = require("time")
 local registry = require("registry")
+local events = require("events")
 local prompts = require("prompts")
 
 -- ════════════════════════════════════════════════════════════
@@ -11,6 +12,12 @@ local prompts = require("prompts")
 local MAX_LLM_MESSAGES = 30
 local MAIN_INTERJECTION_CHANCE = 0.25
 local IDLE_TIMEOUT = "600s"
+local MAX_NPC_CHAIN_DEPTH = 3
+local NPC_REACTION_CHANCE = 0.15
+local NPC_REACTION_DECAY = 0.5
+local IDLE_CHATTER_DELAY = "30s"
+local IDLE_CHATTER_CHANCE = 0.4
+local FAREWELL_CHANCE = 0.7
 
 local NPC_COLORS = {
     "#c882ff", "#ff82b4", "#64dcc8", "#ffa064",
@@ -121,6 +128,10 @@ local function send_npc_list(state)
             name = npc.name,
             role = npc.role,
             color = npc.color,
+            race = npc.data.race or "",
+            occupation = npc.data.occupation or "",
+            drunk_level = npc.data.drunk_level or "",
+            mood = npc.data.mood or "",
         })
     end
     send_to_client(state, {
@@ -167,6 +178,8 @@ local function sync_npcs(state)
     if #arrivals > 0 or #departures > 0 then
         send_npc_list(state)
     end
+
+    return #arrivals > 0 or #departures > 0, departures
 end
 
 -- ════════════════════════════════════════════════════════════
@@ -356,57 +369,127 @@ end
 -- Interjection logic
 -- ════════════════════════════════════════════════════════════
 
-local function try_interjections(state, spoke_ids)
+local function try_interjections(state, spoke_ids, depth)
+    depth = depth or 0
     spoke_ids = spoke_ids or {}
 
+    if depth >= MAX_NPC_CHAIN_DEPTH then
+        return
+    end
+
+    local chance_multiplier = NPC_REACTION_DECAY ^ depth
+    local new_speakers = {}
+
+    -- Registry NPCs
     for _, npc in ipairs(state.registry_npcs) do
-        if not spoke_ids[npc.id] and math.random() < npc.interjection_chance then
-            send_to_client(state, { type = "status", text = npc.name .. " chimes in..." })
+        if not spoke_ids[npc.id] then
+            local chance
+            if depth == 0 then
+                chance = npc.interjection_chance
+            else
+                chance = NPC_REACTION_CHANCE * chance_multiplier
+            end
 
-            local prompt = prompts.build_interjection_prompt(npc, state.language)
-            local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), npc.id)
-            local response = ask_agent_safe(state, prompt, msgs)
+            if math.random() < chance then
+                -- Find last NPC speaker (for reaction targeting)
+                local last_npc_entry = nil
+                if depth > 0 then
+                    for i = #state.chat_log, 1, -1 do
+                        if state.chat_log[i].kind == "npc" and state.chat_log[i].npc_id ~= npc.id then
+                            last_npc_entry = state.chat_log[i]
+                            break
+                        end
+                    end
+                end
 
-            if response then
-                table.insert(state.chat_log, {
-                    speaker = npc.name,
-                    kind = "npc",
-                    npc_id = npc.id,
-                    content = response,
-                })
-                send_to_client(state, {
-                    type = "npc_message",
-                    speaker = npc.name,
-                    npc_id = npc.id,
-                    content = response,
-                    color = npc.color,
-                })
+                local prompt
+                if depth > 0 and last_npc_entry then
+                    prompt = prompts.build_npc_reaction_prompt(npc, last_npc_entry.speaker, state.language)
+                    send_to_client(state, { type = "status", text = npc.name .. " turns to " .. last_npc_entry.speaker .. "..." })
+                else
+                    prompt = prompts.build_interjection_prompt(npc, state.language)
+                    send_to_client(state, { type = "status", text = npc.name .. " chimes in..." })
+                end
+
+                local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), npc.id)
+                local response = ask_agent_safe(state, prompt, msgs)
+
+                if response then
+                    table.insert(state.chat_log, {
+                        speaker = npc.name,
+                        kind = "npc",
+                        npc_id = npc.id,
+                        content = response,
+                    })
+                    send_to_client(state, {
+                        type = "npc_message",
+                        speaker = npc.name,
+                        npc_id = npc.id,
+                        content = response,
+                        color = npc.color,
+                    })
+                    table.insert(new_speakers, npc.id)
+                    spoke_ids[npc.id] = true
+                end
             end
         end
     end
 
-    if not spoke_ids["main"] and math.random() < MAIN_INTERJECTION_CHANCE then
-        send_to_client(state, { type = "status", text = state.character.name .. " chimes in..." })
-
-        local prompt = prompts.build_main_interjection_prompt(state.character, state.language)
-        local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), "main")
-        local response = ask_agent_safe(state, prompt, msgs)
-
-        if response then
-            table.insert(state.chat_log, {
-                speaker = state.character.name,
-                kind = "npc",
-                npc_id = "main",
-                content = response,
-            })
-            send_to_client(state, {
-                type = "npc_message",
-                speaker = state.character.name,
-                npc_id = "main",
-                content = response,
-                color = MAIN_NPC_COLOR,
-            })
+    -- Main patron
+    if not spoke_ids["main"] then
+        local chance
+        if depth == 0 then
+            chance = MAIN_INTERJECTION_CHANCE
+        else
+            chance = NPC_REACTION_CHANCE * chance_multiplier
         end
+
+        if math.random() < chance then
+            local last_npc_entry = nil
+            if depth > 0 then
+                for i = #state.chat_log, 1, -1 do
+                    if state.chat_log[i].kind == "npc" and state.chat_log[i].npc_id ~= "main" then
+                        last_npc_entry = state.chat_log[i]
+                        break
+                    end
+                end
+            end
+
+            local prompt
+            if depth > 0 and last_npc_entry then
+                prompt = prompts.build_main_reaction_prompt(state.character, last_npc_entry.speaker, state.language)
+                send_to_client(state, { type = "status", text = state.character.name .. " turns to " .. last_npc_entry.speaker .. "..." })
+            else
+                prompt = prompts.build_main_interjection_prompt(state.character, state.language)
+                send_to_client(state, { type = "status", text = state.character.name .. " chimes in..." })
+            end
+
+            local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), "main")
+            local response = ask_agent_safe(state, prompt, msgs)
+
+            if response then
+                table.insert(state.chat_log, {
+                    speaker = state.character.name,
+                    kind = "npc",
+                    npc_id = "main",
+                    content = response,
+                })
+                send_to_client(state, {
+                    type = "npc_message",
+                    speaker = state.character.name,
+                    npc_id = "main",
+                    content = response,
+                    color = MAIN_NPC_COLOR,
+                })
+                table.insert(new_speakers, "main")
+                spoke_ids["main"] = true
+            end
+        end
+    end
+
+    -- If anyone new spoke, give others a chance to chain-react
+    if #new_speakers > 0 then
+        try_interjections(state, spoke_ids, depth + 1)
     end
 end
 
@@ -461,7 +544,7 @@ local function handle_command(state, content)
                 content = greeting,
                 color = MAIN_NPC_COLOR,
             })
-            try_interjections(state, { ["main"] = true })
+            try_interjections(state, { ["main"] = true }, 0)
         end
 
         send_to_client(state, { type = "status" })
@@ -516,7 +599,7 @@ end
 -- ════════════════════════════════════════════════════════════
 
 local function handle_chat(state, text)
-    -- Sync NPCs
+    -- Sync NPCs (arrivals/departures handled by event subscription)
     sync_npcs(state)
 
     -- Echo player message
@@ -589,7 +672,7 @@ local function handle_chat(state, text)
     end
 
     -- Interjections
-    try_interjections(state, spoke_ids)
+    try_interjections(state, spoke_ids, 0)
 
     -- Clear status
     send_to_client(state, { type = "status" })
@@ -651,7 +734,7 @@ local function handle_join(state, data)
             content = greeting,
             color = MAIN_NPC_COLOR,
         })
-        try_interjections(state, { ["main"] = true })
+        try_interjections(state, { ["main"] = true }, 0)
     end
 
     send_to_client(state, { type = "status" })
@@ -682,6 +765,139 @@ local function handle_message(state, data)
 end
 
 -- ════════════════════════════════════════════════════════════
+-- Idle chatter — NPCs talk to each other when player is quiet
+-- ════════════════════════════════════════════════════════════
+
+local function try_idle_chatter(state)
+    if #state.registry_npcs == 0 or not state.character then
+        return
+    end
+
+    -- Build candidate list: registry NPCs + main patron
+    local candidates = {}
+    for _, npc in ipairs(state.registry_npcs) do
+        table.insert(candidates, npc)
+    end
+
+    -- Pick a random NPC to start talking
+    local starter = candidates[math.random(1, #candidates)]
+    if not starter then return end
+
+    -- Build names of others present
+    local other_names = {}
+    for _, c in ipairs(candidates) do
+        if c.id ~= starter.id then
+            table.insert(other_names, c.name)
+        end
+    end
+    table.insert(other_names, state.character.name)
+
+    -- Use interjection prompt (they're just breaking the silence)
+    local prompt = prompts.build_interjection_prompt(starter, state.language)
+    send_to_client(state, { type = "status", text = starter.name .. " breaks the silence..." })
+
+    local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), starter.id)
+    local response = ask_agent_safe(state, prompt, msgs)
+
+    if response then
+        table.insert(state.chat_log, {
+            speaker = starter.name,
+            kind = "npc",
+            npc_id = starter.id,
+            content = response,
+        })
+        send_to_client(state, {
+            type = "npc_message",
+            speaker = starter.name,
+            npc_id = starter.id,
+            content = response,
+            color = starter.color,
+        })
+
+        -- Let others react to the idle chatter
+        local spoke_ids = { [starter.id] = true }
+        try_interjections(state, spoke_ids, 1)
+    end
+
+    send_to_client(state, { type = "status" })
+end
+
+-- ════════════════════════════════════════════════════════════
+-- NPC arrival/departure event handler
+-- ════════════════════════════════════════════════════════════
+
+local function handle_npc_event(state, evt)
+    if not state.character then return end
+
+    local event_type = evt.kind
+    local npc_name = evt.data and evt.data.name or nil
+
+    -- Sync registry to pick up the change
+    sync_npcs(state)
+
+    -- On departure, 70% chance someone says goodbye
+    if event_type == "departure" and npc_name and math.random() < FAREWELL_CHANCE then
+        -- Pick a random present NPC (or main patron) to say goodbye
+        local candidates = {}
+        for _, npc in ipairs(state.registry_npcs) do
+            table.insert(candidates, npc)
+        end
+
+        -- Also the main patron can say bye
+        if math.random() < 0.5 then
+            send_to_client(state, { type = "status", text = state.character.name .. " waves..." })
+            local prompt = prompts.build_main_farewell_prompt(state.character, npc_name, state.language)
+            local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), "main")
+            local response = ask_agent_safe(state, prompt, msgs)
+            if response then
+                table.insert(state.chat_log, {
+                    speaker = state.character.name,
+                    kind = "npc",
+                    npc_id = "main",
+                    content = response,
+                })
+                send_to_client(state, {
+                    type = "npc_message",
+                    speaker = state.character.name,
+                    npc_id = "main",
+                    content = response,
+                    color = MAIN_NPC_COLOR,
+                })
+            end
+        elseif #candidates > 0 then
+            local npc = candidates[math.random(1, #candidates)]
+            if npc then
+                send_to_client(state, { type = "status", text = npc.name .. " waves..." })
+                local prompt = prompts.build_farewell_prompt(npc, npc_name, state.language)
+                local msgs = prompts.build_llm_messages(get_llm_window(state.chat_log), npc.id)
+                local response = ask_agent_safe(state, prompt, msgs)
+                if response then
+                    table.insert(state.chat_log, {
+                        speaker = npc.name,
+                        kind = "npc",
+                        npc_id = npc.id,
+                        content = response,
+                    })
+                    send_to_client(state, {
+                        type = "npc_message",
+                        speaker = npc.name,
+                        npc_id = npc.id,
+                        content = response,
+                        color = npc.color,
+                    })
+                end
+            end
+        end
+        send_to_client(state, { type = "status" })
+
+    elseif event_type == "arrival" then
+        -- Arrivals: let existing NPCs react (already handled by sync_npcs system messages)
+        try_interjections(state, {}, 1)
+        send_to_client(state, { type = "status" })
+    end
+end
+
+-- ════════════════════════════════════════════════════════════
 -- Main process loop
 -- ════════════════════════════════════════════════════════════
 
@@ -698,20 +914,25 @@ local function main()
         idle_warning = false,
     }
 
-    local events = process.events()
+    local proc_events = process.events()
     local inbox = process.inbox()
     local idle_timer = time.after(IDLE_TIMEOUT)
+    local chatter_timer = time.after(IDLE_CHATTER_DELAY)
+    local npc_sub = events.subscribe("bar.npc")
+    local npc_channel = npc_sub:channel()
 
     logger:info("session process started")
 
     while true do
         local r = channel.select {
-            events:case_receive(),
+            proc_events:case_receive(),
             inbox:case_receive(),
             idle_timer:case_receive(),
+            chatter_timer:case_receive(),
+            npc_channel:case_receive(),
         }
 
-        if r.channel == events then
+        if r.channel == proc_events then
             local event = r.value
             if event.kind == process.event.CANCEL then
                 if state.client_pid then
@@ -750,13 +971,29 @@ local function main()
                 state.idle_warning = true
             end
 
-        elseif r.channel == inbox then
-            -- Reset idle timer on any message
-            idle_timer = time.after(IDLE_TIMEOUT)
-            state.idle_warning = false
+        elseif r.channel == chatter_timer then
+            -- NPCs may start chatting when player is quiet
+            if state.character and #state.registry_npcs > 0 and math.random() < IDLE_CHATTER_CHANCE then
+                sync_npcs(state)
+                try_idle_chatter(state)
+            end
+            chatter_timer = time.after(IDLE_CHATTER_DELAY)
 
+        elseif r.channel == npc_channel then
+            -- NPC arrived or departed — react immediately
+            local evt = r.value
+            handle_npc_event(state, evt)
+
+        elseif r.channel == inbox then
             local msg = r.value
             local topic = msg:topic()
+
+            -- Reset timers on real messages (not heartbeats)
+            if topic ~= "ws.heartbeat" then
+                idle_timer = time.after(IDLE_TIMEOUT)
+                chatter_timer = time.after(IDLE_CHATTER_DELAY)
+                state.idle_warning = false
+            end
             local data = msg:payload():data()
 
             if topic == "ws.join" then
@@ -767,7 +1004,7 @@ local function main()
                 logger:info("session left", { client_pid = data.client_pid })
                 return 0
             elseif topic == "ws.heartbeat" then
-                -- Keep-alive, idle timer already reset above
+                -- Keep-alive only, timers not reset (so chatter can still fire)
             end
         end
     end

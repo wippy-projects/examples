@@ -22,11 +22,6 @@ entries:
         value: app:router_http
 
   # ── Hosts ──────────────────────────────────────────────────
-  - name: terminal
-    kind: terminal.host
-    lifecycle:
-      auto_start: true
-
   - name: processes
     kind: process.host
     lifecycle:
@@ -123,7 +118,7 @@ entries:
     kind: process.lua
     source: file://session.lua
     method: main
-    modules: [json, logger, time, registry]
+    modules: [json, logger, time, registry, events]
     imports:
       prompts: app:prompts
 
@@ -203,6 +198,7 @@ entries:
       - logger
       - registry
       - time
+      - events
 
   - name: npc_manager
     kind: process.service
@@ -252,17 +248,3 @@ entries:
       mood: looking for inspiration for a new ballad
       interjection_chance: 0.2
 
-  # ── CLI Process ────────────────────────────────────────────
-  - name: cli
-    meta:
-      command:
-        name: bar
-        short: Go to bar
-    kind: process.lua
-    source: file://cli.lua
-    method: main
-    modules:
-      - io
-      - time
-      - registry
-      - logger
