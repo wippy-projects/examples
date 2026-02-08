@@ -2,7 +2,7 @@ version: "1.0"
 namespace: app
 
 entries:
-  # ── Dependency ─────────────────────────────────────────────
+  # ── Dependencies ────────────────────────────────────────────
   - name: __dependency.llm
     kind: ns.dependency
     component: wippy/llm
@@ -12,6 +12,14 @@ entries:
         value: app:file_env
       - name: process_host
         value: app:processes
+
+  - name: views
+    kind: ns.dependency
+    component: wippy/views
+    version: "*"
+    parameters:
+      - name: api_router
+        value: app:router_http
 
   # ── Hosts ──────────────────────────────────────────────────
   - name: terminal
@@ -24,21 +32,106 @@ entries:
     lifecycle:
       auto_start: true
 
+  # ── HTTP Infrastructure ────────────────────────────────────
+  - name: gateway
+    kind: http.service
+    addr: ":8080"
+    lifecycle:
+      auto_start: true
+
+  - name: router_http
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /
+
+  # ── Templates ──────────────────────────────────────────────
+  - name: templates
+    kind: template.set
+
+  - name: layout
+    kind: template.jet
+    set: app:templates
+    source: file://templates/layout.jet
+
+  - name: chat_page
+    kind: template.jet
+    set: app:templates
+    source: file://templates/chat.jet
+    meta:
+      type: view.page
+      title: "The Rusty Flagon"
+      path: /
+    data_func: app:chat_data
+
+  # ── Page Handler ───────────────────────────────────────────
+  - name: chat_data
+    kind: function.lua
+    source: file://handlers/chat_data.lua
+    method: handler
+
+  - name: page
+    kind: function.lua
+    source: file://handlers/page.lua
+    method: handler
+    modules: [http]
+    imports:
+      renderer: wippy.views:renderer
+
+  - name: page.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:router_http
+    method: GET
+    path: /
+    func: app:page
+
+  # ── WebSocket Router ─────────────────────────────────────
+  - name: ws_router
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /ws
+    post_middleware:
+      - websocket_relay
+    post_options:
+      wsrelay.allowed.origins: "*"
+
+  # ── WS Connect Handler ──────────────────────────────────
+  - name: ws_connect
+    kind: function.lua
+    source: file://handlers/ws_connect.lua
+    method: handler
+    modules: [http, json]
+
+  - name: ws_connect.endpoint
+    kind: http.endpoint
+    meta:
+      router: app:ws_router
+    method: GET
+    path: /chat
+    func: app:ws_connect
+
+  # ── Shared Libraries ─────────────────────────────────────
+  - name: prompts
+    kind: library.lua
+    source: file://lib/prompts.lua
+    modules: []
+
+  # ── Session Process ──────────────────────────────────────
+  - name: session_process
+    kind: process.lua
+    source: file://session.lua
+    method: main
+    modules: [json, logger, time, registry]
+    imports:
+      prompts: app:prompts
+
   # ── Environment ────────────────────────────────────────────
   - name: file_env
     kind: env.storage.file
     file_path: ./.env
     auto_create: true
-
-  - name: openai_api_key
-    kind: env.variable
-    variable: OPENAI_API_KEY
-    storage: app:file_env
-
-  - name: anthropic_api_key
-    kind: env.variable
-    variable: ANTHROPIC_API_KEY
-    storage: app:file_env
 
   # ── Models ─────────────────────────────────────────────────
   - name: gpt_4o_mini

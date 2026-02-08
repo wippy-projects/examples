@@ -1,0 +1,557 @@
+{{ extends "layout" }}
+
+{{ block title() }}{{ data.title }}{{ end }}
+
+{{ block styles() }}
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #0f0f1a;
+        color: #e0e0e0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    .header {
+        background: #1a1a2e;
+        padding: 12px 20px;
+        border-bottom: 1px solid #2a2a40;
+    }
+    .header h1 {
+        font-size: 18px;
+        color: #ffc83c;
+        margin-bottom: 2px;
+    }
+    .header .subtitle {
+        font-size: 13px;
+        color: #78788c;
+    }
+    .header .subtitle .char-name {
+        color: #78c8ff;
+        font-weight: 600;
+    }
+    .header .char-traits {
+        font-size: 12px;
+        color: #555;
+        margin-top: 2px;
+    }
+
+    /* ── Main layout ────────────────────────────── */
+    .main {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    /* ── Chat area ──────────────────────────────── */
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px;
+    }
+    .msg { margin-bottom: 12px; line-height: 1.5; }
+    .msg .speaker { font-weight: 600; margin-right: 6px; }
+    .msg .content { display: inline; }
+    .msg.system {
+        color: #b4b464;
+        font-style: italic;
+        padding: 4px 0;
+    }
+    .msg.player .speaker { color: #64ff96; }
+    .msg.error-msg {
+        color: #ff6464;
+        background: rgba(255, 100, 100, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #ff6464;
+    }
+
+    #status {
+        padding: 4px 20px 8px;
+        font-size: 13px;
+        color: #78788c;
+        font-style: italic;
+        min-height: 24px;
+    }
+    #status .dots::after {
+        content: '';
+        animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+        0% { content: ''; }
+        25% { content: '.'; }
+        50% { content: '..'; }
+        75% { content: '...'; }
+    }
+
+    /* ── Input area ─────────────────────────────── */
+    .input-area {
+        display: flex;
+        padding: 12px 20px;
+        background: #1e1e2e;
+        border-top: 1px solid #2a2a40;
+        gap: 8px;
+    }
+    #msg-input {
+        flex: 1;
+        background: #2a2a40;
+        border: 1px solid #3a3a50;
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: #e0e0e0;
+        font-size: 14px;
+        outline: none;
+    }
+    #msg-input:focus { border-color: #ffc83c; }
+    #msg-input::placeholder { color: #555; }
+
+    #send-btn {
+        background: #ffc83c;
+        color: #0f0f1a;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #send-btn:hover { background: #dca028; }
+    #send-btn:disabled { background: #3a3a50; color: #555; cursor: not-allowed; }
+
+    .input-lang {
+        font-size: 11px;
+        color: #dca028;
+        padding: 2px 20px 0;
+        background: #1e1e2e;
+    }
+
+    /* ── Sidebar ────────────────────────────────── */
+    .sidebar {
+        width: 220px;
+        background: #1a1a2e;
+        border-left: 1px solid #2a2a40;
+        padding: 16px;
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+    .sidebar h3 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #78788c;
+        margin-bottom: 12px;
+    }
+    .npc-item {
+        margin-bottom: 10px;
+        transition: opacity 0.3s ease;
+    }
+    .npc-item .name {
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .npc-item .role {
+        font-size: 12px;
+        color: #78788c;
+    }
+    .npc-item .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    .sidebar .commands {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #2a2a40;
+    }
+    .sidebar .commands h3 { margin-bottom: 8px; }
+    .cmd-btn {
+        display: inline-block;
+        background: #2a2a40;
+        color: #dca028;
+        border: 1px solid #3a3a50;
+        border-radius: 4px;
+        padding: 4px 10px;
+        margin: 2px;
+        font-size: 12px;
+        font-family: monospace;
+        cursor: pointer;
+    }
+    .cmd-btn:hover { background: #3a3a50; }
+
+    /* ── Reconnect overlay ─────────────────────── */
+    #reconnect-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 15, 26, 0.9);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 16px;
+    }
+    #reconnect-overlay.visible { display: flex; }
+    #reconnect-overlay .msg {
+        color: #ffc83c;
+        font-size: 18px;
+    }
+    #reconnect-overlay button {
+        background: #ffc83c;
+        color: #0f0f1a;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #reconnect-overlay button:hover { background: #dca028; }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media (max-width: 768px) {
+        .sidebar { display: none; }
+    }
+
+    /* ── Scrollbar ──────────────────────────────── */
+    #messages::-webkit-scrollbar { width: 6px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #2a2a40; border-radius: 3px; }
+    #messages::-webkit-scrollbar-thumb:hover { background: #3a3a50; }
+</style>
+{{ end }}
+
+{{ block body() }}
+<div class="header">
+    <h1>&#x2B25; THE RUSTY FLAGON</h1>
+    <div class="subtitle" id="header-subtitle">Connecting...</div>
+    <div class="char-traits" id="header-traits"></div>
+</div>
+
+<div class="main">
+    <div class="chat-area">
+        <div id="messages"></div>
+        <div id="status"></div>
+        <div class="input-lang" id="lang-display"></div>
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="Say something..." disabled />
+            <button id="send-btn" disabled>Send</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <h3>Who's Here</h3>
+        <div id="npc-list">
+            <div style="color:#555;font-size:13px;">No one yet...</div>
+        </div>
+
+        <div class="commands">
+            <h3>Commands</h3>
+            <button class="cmd-btn" onclick="sendCommand('new')">/new</button>
+            <button class="cmd-btn" onclick="sendCommand('look')">/look</button>
+            <button class="cmd-btn" onclick="sendCommand('lang')">/lang</button>
+            <button class="cmd-btn" onclick="sendCommand('help')">/help</button>
+        </div>
+    </div>
+</div>
+
+<div id="reconnect-overlay">
+    <div class="msg" id="reconnect-msg">Connection lost</div>
+    <button id="reconnect-btn" onclick="connect()">Reconnect</button>
+</div>
+{{ end }}
+
+{{ block scripts() }}
+<script>
+(function() {
+    // Build WS URL from current page location (works on any host/port)
+    var loc = window.location;
+    var wsProto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+    var wsUrl = wsProto + '//' + loc.host + '/ws/chat';
+    console.log('[Rusty Flagon] WS URL:', wsUrl);
+    var ws = null;
+    var character = null;
+    var npcs = [];
+    var npcColors = {};
+    var language = "English";
+    var reconnectAttempts = 0;
+    var MAX_RECONNECT = 5;
+    var reconnectTimer = null;
+
+    var messagesEl = document.getElementById('messages');
+    var statusEl = document.getElementById('status');
+    var inputEl = document.getElementById('msg-input');
+    var sendBtn = document.getElementById('send-btn');
+    var subtitleEl = document.getElementById('header-subtitle');
+    var traitsEl = document.getElementById('header-traits');
+    var npcListEl = document.getElementById('npc-list');
+    var langDisplay = document.getElementById('lang-display');
+    var overlay = document.getElementById('reconnect-overlay');
+    var overlayMsg = document.getElementById('reconnect-msg');
+    var overlayBtn = document.getElementById('reconnect-btn');
+
+    function connect() {
+        if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+        overlay.classList.remove('visible');
+
+        try {
+            ws = new WebSocket(wsUrl);
+        } catch(e) {
+            subtitleEl.textContent = 'Connection failed';
+            return;
+        }
+
+        ws.onopen = function() {
+            reconnectAttempts = 0;
+            subtitleEl.textContent = 'Connected';
+            inputEl.disabled = false;
+            sendBtn.disabled = false;
+            inputEl.focus();
+        };
+
+        ws.onmessage = function(event) {
+            try {
+                var parsed = JSON.parse(event.data);
+
+                // Relay wraps messages: {topic: "ws.send", data: {type: "text", data: "..."}}
+                var msg;
+                if (parsed.topic && parsed.data && parsed.data.data) {
+                    msg = JSON.parse(parsed.data.data);
+                } else if (parsed.type && typeof parsed.type === 'string') {
+                    msg = parsed;
+                } else {
+                    return;
+                }
+                handleMessage(msg);
+            } catch(e) {
+                console.error('Message parse error:', e);
+            }
+        };
+
+        ws.onclose = function() {
+            subtitleEl.textContent = 'Disconnected';
+            inputEl.disabled = true;
+            sendBtn.disabled = true;
+
+            if (reconnectAttempts < MAX_RECONNECT) {
+                var delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+                reconnectAttempts++;
+                overlayMsg.textContent = 'Reconnecting...';
+                overlayBtn.style.display = 'none';
+                overlay.classList.add('visible');
+                reconnectTimer = setTimeout(connect, delay);
+            } else {
+                overlayMsg.textContent = 'Connection lost.';
+                overlayBtn.style.display = '';
+                overlay.classList.add('visible');
+            }
+        };
+
+        ws.onerror = function() {};
+    }
+
+    function handleMessage(msg) {
+        switch (msg.type) {
+            case 'greeting':
+                handleGreeting(msg);
+                break;
+            case 'npc_message':
+                appendNpcMessage(msg);
+                break;
+            case 'player_message':
+                appendPlayerMessage(msg);
+                break;
+            case 'system':
+                appendSystemMessage(msg.content);
+                break;
+            case 'status':
+                showStatus(msg.text);
+                break;
+            case 'character_info':
+                updateCharacter(msg.character);
+                updateNpcSidebar(msg.npcs);
+                break;
+            case 'new_character':
+                handleNewCharacter(msg);
+                break;
+            case 'error':
+                showError(msg.message);
+                break;
+        }
+    }
+
+    function handleGreeting(msg) {
+        character = msg.character;
+        updateCharacter(character);
+        updateNpcSidebar(msg.npcs);
+        appendSystemMessage('*You push open the heavy oak door and step inside. The warm glow of lanterns, the clink of mugs, and a dozen conversations wash over you. You take a seat at the bar.*');
+    }
+
+    function handleNewCharacter(msg) {
+        character = msg.character;
+        messagesEl.innerHTML = '';
+        updateCharacter(character);
+        updateNpcSidebar(msg.npcs);
+        appendSystemMessage('*You finish your drink and move to another seat...*');
+    }
+
+    function updateCharacter(c) {
+        if (!c) return;
+        character = c;
+        subtitleEl.innerHTML = 'Talking to: <span class="char-name">' + esc(c.name) + '</span>';
+        traitsEl.textContent = c.race + ' \u00B7 ' + c.occupation + ' \u00B7 ' + c.drunk_level + ' \u00B7 ' + c.mood;
+    }
+
+    function updateNpcSidebar(npcList) {
+        if (!npcList) return;
+        npcs = npcList;
+        npcColors = {};
+        var html = '';
+        for (var i = 0; i < npcList.length; i++) {
+            var npc = npcList[i];
+            npcColors[npc.id] = npc.color;
+            html += '<div class="npc-item">'
+                + '<span class="dot" style="background:' + npc.color + '"></span>'
+                + '<span class="name" style="color:' + npc.color + '">' + esc(npc.name) + '</span>'
+                + '<div class="role">' + esc(npc.role) + '</div>'
+                + '</div>';
+        }
+        if (html === '') html = '<div style="color:#555;font-size:13px;">No one here...</div>';
+        npcListEl.innerHTML = html;
+    }
+
+    function appendNpcMessage(msg) {
+        var color = msg.color || npcColors[msg.npc_id] || '#78c8ff';
+        var div = document.createElement('div');
+        div.className = 'msg npc';
+        div.innerHTML = '<span class="speaker" style="color:' + color + '">' + esc(msg.speaker) + ':</span>'
+            + '<span class="content">' + formatContent(msg.content) + '</span>';
+        messagesEl.appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendPlayerMessage(msg) {
+        var div = document.createElement('div');
+        div.className = 'msg player';
+        div.innerHTML = '<span class="speaker">You:</span>'
+            + '<span class="content">' + esc(msg.content) + '</span>';
+        messagesEl.appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendSystemMessage(content) {
+        var div = document.createElement('div');
+        div.className = 'msg system';
+        div.innerHTML = formatContent(content);
+        messagesEl.appendChild(div);
+        scrollToBottom();
+    }
+
+    function showStatus(text) {
+        if (text) {
+            statusEl.innerHTML = '<span class="dots">' + esc(text) + '</span>';
+        } else {
+            statusEl.innerHTML = '';
+        }
+    }
+
+    function showError(message) {
+        var div = document.createElement('div');
+        div.className = 'msg error-msg';
+        div.textContent = message;
+        messagesEl.appendChild(div);
+        scrollToBottom();
+        setTimeout(function() {
+            if (div.parentNode) div.parentNode.removeChild(div);
+        }, 8000);
+    }
+
+    function formatContent(text) {
+        if (!text) return '';
+        // Italicize *text*
+        return esc(text).replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    }
+
+    function esc(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function scrollToBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function sendMessage(text) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        text = text.trim();
+        if (!text) return;
+
+        if (text.charAt(0) === '/') {
+            var parts = text.split(' ');
+            var cmd = parts[0].substring(1);
+            var val = parts.slice(1).join(' ');
+            if (cmd === 'lang' && !val) {
+                val = prompt('Enter language:', language);
+                if (!val) return;
+            }
+            ws.send(JSON.stringify({ type: 'command', command: cmd, value: val }));
+            if (cmd === 'lang' && val) {
+                language = val;
+                langDisplay.textContent = 'Language: ' + language;
+            }
+        } else {
+            ws.send(JSON.stringify({ type: 'chat', text: text }));
+        }
+    }
+
+    window.connect = connect;
+
+    window.sendCommand = function(cmd) {
+        if (cmd === 'lang') {
+            var val = prompt('Enter language:', language);
+            if (!val) return;
+            sendMessage('/lang ' + val);
+        } else {
+            sendMessage('/' + cmd);
+        }
+    };
+
+    inputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            var text = inputEl.value.trim();
+            if (text) {
+                sendMessage(text);
+                inputEl.value = '';
+            }
+        }
+    });
+
+    sendBtn.addEventListener('click', function() {
+        var text = inputEl.value.trim();
+        if (text) {
+            sendMessage(text);
+            inputEl.value = '';
+            inputEl.focus();
+        }
+    });
+
+    // Start connection
+    connect();
+})();
+</script>
+{{ end }}
