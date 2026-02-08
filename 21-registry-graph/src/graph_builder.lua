@@ -207,27 +207,28 @@ end
 -- ── DOT rendering ───────────────────────────────────────────
 
 local KIND_COLORS: {[string]: {fill: string, border: string}} = {
-    ["http.service"]        = {fill = "#fecaca", border = "#ef4444"},
-    ["http.router"]         = {fill = "#fed7aa", border = "#f97316"},
-    ["http.endpoint"]       = {fill = "#fde68a", border = "#eab308"},
-    ["function.lua"]        = {fill = "#bbf7d0", border = "#22c55e"},
-    ["process.lua"]         = {fill = "#bfdbfe", border = "#3b82f6"},
-    ["process.service"]     = {fill = "#c7d2fe", border = "#6366f1"},
-    ["process.host"]        = {fill = "#ddd6fe", border = "#8b5cf6"},
-    ["library.lua"]         = {fill = "#d9f99d", border = "#84cc16"},
-    ["db.sql.sqlite"]       = {fill = "#e9d5ff", border = "#a855f7"},
-    ["db.sql.postgres"]     = {fill = "#e9d5ff", border = "#a855f7"},
-    ["store.memory"]        = {fill = "#cffafe", border = "#06b6d4"},
-    ["queue.driver.memory"] = {fill = "#fbcfe8", border = "#ec4899"},
-    ["queue.queue"]         = {fill = "#fce7f3", border = "#f472b6"},
-    ["queue.consumer"]      = {fill = "#ffe4e6", border = "#fb7185"},
-    ["template.set"]        = {fill = "#f5f5f4", border = "#a8a29e"},
-    ["template.jet"]        = {fill = "#fafaf9", border = "#d6d3d1"},
-    ["ns.dependency"]       = {fill = "#e0e7ff", border = "#818cf8"},
-    ["workflow.lua"]        = {fill = "#fef9c3", border = "#ca8a04"},
-    ["temporal.client"]     = {fill = "#fef3c7", border = "#f59e0b"},
-    ["temporal.worker"]     = {fill = "#fde68a", border = "#eab308"},
-    ["fs.directory"]        = {fill = "#e2e8f0", border = "#64748b"},
+    ["http.service"]        = {fill = "#3b1c1c", border = "#ef4444"},
+    ["http.router"]         = {fill = "#3b2a14", border = "#f97316"},
+    ["http.endpoint"]       = {fill = "#3b3514", border = "#eab308"},
+    ["function.lua"]        = {fill = "#14331e", border = "#22c55e"},
+    ["process.lua"]         = {fill = "#1a2740", border = "#3b82f6"},
+    ["process.service"]     = {fill = "#221a40", border = "#6366f1"},
+    ["process.host"]        = {fill = "#2a1a40", border = "#8b5cf6"},
+    ["library.lua"]         = {fill = "#263314", border = "#84cc16"},
+    ["db.sql.sqlite"]       = {fill = "#2a1a3b", border = "#a855f7"},
+    ["db.sql.postgres"]     = {fill = "#2a1a3b", border = "#a855f7"},
+    ["store.memory"]        = {fill = "#143033", border = "#06b6d4"},
+    ["queue.driver.memory"] = {fill = "#3b1430", border = "#ec4899"},
+    ["queue.queue"]         = {fill = "#331a2e", border = "#f472b6"},
+    ["queue.consumer"]      = {fill = "#331a22", border = "#fb7185"},
+    ["template.set"]        = {fill = "#262524", border = "#a8a29e"},
+    ["template.jet"]        = {fill = "#2a2928", border = "#d6d3d1"},
+    ["ns.dependency"]       = {fill = "#1a1e33", border = "#818cf8"},
+    ["workflow.lua"]        = {fill = "#332e14", border = "#ca8a04"},
+    ["temporal.client"]     = {fill = "#332a14", border = "#f59e0b"},
+    ["temporal.worker"]     = {fill = "#3b3514", border = "#eab308"},
+    ["fs.directory"]        = {fill = "#1e2430", border = "#64748b"},
+    ["registry.entry"]      = {fill = "#222233", border = "#9ca3af"},
 }
 
 local CATEGORY_COLORS = {
@@ -249,7 +250,7 @@ local CATEGORY_COLORS = {
 local function get_kind_colors(kind: string): (string, string)
     local c = KIND_COLORS[kind]
     if c then return c.fill, c.border end
-    return "#e5e7eb", "#9ca3af"
+    return "#222233", "#6c7086"
 end
 
 --- Escape string for DOT labels
@@ -263,10 +264,11 @@ local function render_dot(nodes, edges, options)
     local lines = {}
     table.insert(lines, "digraph registry {")
     table.insert(lines, '    rankdir=LR;')
+    table.insert(lines, '    bgcolor="transparent";')
     table.insert(lines, '    node [shape=box, style="filled,rounded",')
-    table.insert(lines, '          fontname="Helvetica", fontsize=11];')
+    table.insert(lines, '          fontname="Helvetica", fontsize=11, fontcolor="#cdd6f4"];')
     table.insert(lines, '    edge [fontname="Helvetica", fontsize=9,')
-    table.insert(lines, '          color="#888888", arrowsize=0.8];')
+    table.insert(lines, '          color="#585b70", fontcolor="#6c7086", arrowsize=0.8];')
     table.insert(lines, '')
 
     -- Group by namespace
@@ -287,7 +289,8 @@ local function render_dot(nodes, edges, options)
         table.sort(ns_nodes, function(a, b) return a.id < b.id end)
         table.insert(lines, '    subgraph cluster_' .. tostring(idx - 1) .. ' {')
         table.insert(lines, '        label="' .. dot_escape(ns) .. '";')
-        table.insert(lines, '        style="filled,rounded"; fillcolor="#f8f9fa"; color="#dee2e6";')
+        table.insert(lines, '        style="filled,rounded"; fillcolor="#181825"; color="#313244";')
+        table.insert(lines, '        fontcolor="#6c7086";')
         for _, node in ipairs(ns_nodes) do
             local fill, border = get_kind_colors(tostring(node.kind))
             local label = dot_escape(node.name) .. "\\n" .. dot_escape(node.kind)
