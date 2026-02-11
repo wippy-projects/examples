@@ -5,7 +5,7 @@ local renderer = require("renderer")
 local function handler()
     local res = http.response()
 
-    local content, err = renderer.render("app:viewer", {}, {})
+    local content, err = renderer.render("graph:viewer", {}, {})
     if err then
         res:set_status(500)
         res:write("Render error: " .. tostring(err))

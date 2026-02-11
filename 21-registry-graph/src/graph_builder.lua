@@ -229,6 +229,11 @@ local KIND_COLORS: {[string]: {fill: string, border: string}} = {
     ["temporal.worker"]     = {fill = "#3b3514", border = "#eab308"},
     ["fs.directory"]        = {fill = "#1e2430", border = "#64748b"},
     ["registry.entry"]      = {fill = "#222233", border = "#9ca3af"},
+    ["env.storage.file"]    = {fill = "#2a2014", border = "#d97706"},
+    ["env.variable"]        = {fill = "#2a2214", border = "#f59e0b"},
+    ["exec.native"]         = {fill = "#1e2430", border = "#94a3b8"},
+    ["ns.definition"]       = {fill = "#1a1e33", border = "#a5b4fc"},
+    ["ns.requirement"]      = {fill = "#1a1e33", border = "#c084fc"},
 }
 
 local CATEGORY_COLORS = {
@@ -242,6 +247,7 @@ local CATEGORY_COLORS = {
     lifecycle  = "#9ca3af",
     dependency = "#6366f1",
     contract   = "#14b8a6",
+    env        = "#d97706",
     views      = "#f97316",
     unknown    = "#888888",
 }

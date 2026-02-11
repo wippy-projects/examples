@@ -241,6 +241,11 @@
         "registry.entry": {fill: "#222233", border: "#9ca3af"},
         "workflow.lua": {fill: "#332e14", border: "#ca8a04"},
         "fs.directory": {fill: "#1e2430", border: "#64748b"},
+        "env.storage.file": {fill: "#2a2014", border: "#d97706"},
+        "env.variable": {fill: "#2a2214", border: "#f59e0b"},
+        "exec.native": {fill: "#1e2430", border: "#94a3b8"},
+        "ns.definition": {fill: "#1a1e33", border: "#a5b4fc"},
+        "ns.requirement": {fill: "#1a1e33", border: "#c084fc"},
     };
 
     var CATEGORY_COLORS = {
@@ -254,6 +259,7 @@
         lifecycle: "#9ca3af",
         dependency: "#6366f1",
         contract: "#14b8a6",
+        env: "#d97706",
         views: "#f97316",
         unknown: "#888888",
     };
@@ -261,6 +267,9 @@
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 <script type="module">
     import * as Viz from "https://cdn.jsdelivr.net/npm/@viz-js/viz/+esm";
+
+    // Base path for API calls — works under any router prefix (e.g. /graph)
+    const BASE = window.location.pathname.replace(/\/+$/, '');
 
     let viz = null;
     let panZoom = null;
@@ -389,10 +398,10 @@
                 document.getElementById("graph-tabs").style.display = "none";
                 if (lbl.dataset.ns) {
                     setActiveToolbar(null);
-                    fetchAndRenderGraph("/api/graph?ns=" + encodeURIComponent(lbl.dataset.ns));
+                    fetchAndRenderGraph(BASE + "/api/graph?ns=" + encodeURIComponent(lbl.dataset.ns));
                 } else if (lbl.dataset.kind) {
                     setActiveToolbar(null);
-                    fetchAndRenderGraph("/api/graph?kind=" + encodeURIComponent(lbl.dataset.kind));
+                    fetchAndRenderGraph(BASE + "/api/graph?kind=" + encodeURIComponent(lbl.dataset.kind));
                 }
             });
         });
@@ -400,7 +409,7 @@
 
     async function loadEntries() {
         try {
-            const res = await fetch("/api/entries");
+            const res = await fetch(BASE + "/api/entries");
             const data = await res.json();
             allEntries = data.entries || [];
             updateTree();
@@ -736,14 +745,14 @@
         setActiveToolbar("btn-full");
         document.getElementById("graph-tabs").style.display = "none";
         document.querySelectorAll(".tree-file").forEach(x => x.classList.remove("active"));
-        fetchAndRenderGraph("/api/graph");
+        fetchAndRenderGraph(BASE + "/api/graph");
     };
 
     window.loadOrphans = function() {
         currentEntry = null;
         setActiveToolbar("btn-orphans");
         document.getElementById("graph-tabs").style.display = "none";
-        fetchAndRenderGraph("/api/graph?orphans=true");
+        fetchAndRenderGraph(BASE + "/api/graph?orphans=true");
     };
 
     window.loadByKind = function(kind) {
@@ -752,7 +761,7 @@
         document.getElementById("kind-filter").value = kind;
         document.getElementById("graph-tabs").style.display = "none";
         if (!kind) { loadFullGraph(); return; }
-        fetchAndRenderGraph("/api/graph?kind=" + encodeURIComponent(kind));
+        fetchAndRenderGraph(BASE + "/api/graph?kind=" + encodeURIComponent(kind));
     };
 
     window.loadByNs = function(ns) {
@@ -761,13 +770,13 @@
         document.getElementById("ns-filter").value = ns;
         document.getElementById("graph-tabs").style.display = "none";
         if (!ns) { loadFullGraph(); return; }
-        fetchAndRenderGraph("/api/graph?ns=" + encodeURIComponent(ns));
+        fetchAndRenderGraph(BASE + "/api/graph?ns=" + encodeURIComponent(ns));
     };
 
     async function loadEntryGraph(entryId, dir) {
         setActiveToolbar(null);
         showGraphTabs(dir);
-        let url = "/api/graph?entry=" + encodeURIComponent(entryId) + "&depth=3";
+        let url = BASE + "/api/graph?entry=" + encodeURIComponent(entryId) + "&depth=3";
         if (dir && dir !== "both") url += "&dir=" + dir;
         fetchAndRenderGraph(url);
     }

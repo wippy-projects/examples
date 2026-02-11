@@ -1,20 +1,33 @@
 version: "1.0"
-namespace: app
+namespace: graph
 
 entries:
-  # ── Infrastructure ─────────────────────────────────────────
-
-  - name: gateway
-    kind: http.service
-    addr: ":8090"
-    lifecycle:
-      auto_start: true
-
-  - name: router
-    kind: http.router
+  # ── Package Definition ─────────────────────────────────
+  - name: definition
+    kind: ns.definition
     meta:
-      server: app:gateway
-    prefix: /
+      title: Registry Graph
+      description: Interactive registry graph visualization with DOT rendering
+
+  # ── Requirements (injected by consumer) ─────────────────
+
+  - name: api_router
+    kind: ns.requirement
+    meta:
+      description: HTTP router for graph API endpoints and views
+    targets:
+      - entry: graph:page.endpoint
+        path: .meta.router
+      - entry: graph:graph.endpoint
+        path: .meta.router
+      - entry: graph:entries.endpoint
+        path: .meta.router
+      - entry: graph:kinds.endpoint
+        path: .meta.router
+      - entry: graph:namespaces.endpoint
+        path: .meta.router
+      - entry: graph:rules.endpoint
+        path: .meta.router
 
   # ── Views Dependency ───────────────────────────────────────
 
@@ -22,9 +35,6 @@ entries:
     kind: ns.dependency
     component: wippy/views
     version: "*"
-    parameters:
-      - name: api_router
-        value: app:router
 
   # ── Templates ──────────────────────────────────────────────
 
@@ -33,18 +43,18 @@ entries:
 
   - name: layout
     kind: template.jet
-    set: app:templates
+    set: graph:templates
     source: file://templates/layout.jet
 
   - name: viewer
     kind: template.jet
-    set: app:templates
+    set: graph:templates
     source: file://templates/page.jet
     meta:
       type: view.page
       title: "Registry Graph"
       path: /
-    data_func: app:page_data
+    data_func: graph:page_data
 
   # ── Data Functions ─────────────────────────────────────────
 
@@ -53,7 +63,7 @@ entries:
     source: file://data/page_data.lua
     method: handler
     imports:
-      graph_builder: app:graph_builder
+      graph_builder: graph:graph_builder
 
   # ── Shared Library ─────────────────────────────────────────
 
@@ -77,10 +87,10 @@ entries:
   - name: page.endpoint
     kind: http.endpoint
     meta:
-      router: app:router
+      router: graph:router
     method: GET
     path: /
-    func: app:page
+    func: page
 
   - name: graph
     kind: function.lua
@@ -89,15 +99,15 @@ entries:
     modules:
       - http
     imports:
-      graph_builder: app:graph_builder
+      graph_builder: graph:graph_builder
 
   - name: graph.endpoint
     kind: http.endpoint
     meta:
-      router: app:router
+      router: graph:router
     method: GET
     path: /api/graph
-    func: app:graph
+    func: graph
 
   - name: entries
     kind: function.lua
@@ -106,15 +116,15 @@ entries:
     modules:
       - http
     imports:
-      graph_builder: app:graph_builder
+      graph_builder: graph:graph_builder
 
   - name: entries.endpoint
     kind: http.endpoint
     meta:
-      router: app:router
+      router: graph:router
     method: GET
     path: /api/entries
-    func: app:entries
+    func: entries
 
   - name: kinds
     kind: function.lua
@@ -123,15 +133,15 @@ entries:
     modules:
       - http
     imports:
-      graph_builder: app:graph_builder
+      graph_builder: graph:graph_builder
 
   - name: kinds.endpoint
     kind: http.endpoint
     meta:
-      router: app:router
+      router: graph:router
     method: GET
     path: /api/kinds
-    func: app:kinds
+    func: kinds
 
   - name: namespaces
     kind: function.lua
@@ -140,15 +150,15 @@ entries:
     modules:
       - http
     imports:
-      graph_builder: app:graph_builder
+      graph_builder: graph:graph_builder
 
   - name: namespaces.endpoint
     kind: http.endpoint
     meta:
-      router: app:router
+      router: graph:router
     method: GET
     path: /api/namespaces
-    func: app:namespaces
+    func: namespaces
 
   - name: rules
     kind: function.lua
@@ -157,15 +167,15 @@ entries:
     modules:
       - http
     imports:
-      graph_builder: app:graph_builder
+      graph_builder: graph:graph_builder
 
   - name: rules.endpoint
     kind: http.endpoint
     meta:
-      router: app:router
+      router: graph:router
     method: GET
     path: /api/rules
-    func: app:rules
+    func: rules
 
   # ── Edge Rules ─────────────────────────────────────────────
 
@@ -328,3 +338,105 @@ entries:
       location: "data"
       edge_style: "dotted"
       category: "dependency"
+
+  - name: rule.ns_requirement.targets
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "ns.requirement"
+      type: "array_field"
+      field: "targets"
+      value_field: "entry"
+      label_field: "path"
+      location: "data"
+      edge_style: "dotted"
+      category: "contract"
+
+  - name: rule.env_variable.storage
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "env.variable"
+      field: "storage"
+      location: "data"
+      label: "storage"
+      edge_style: "solid"
+      category: "env"
+
+  - name: rule.registry_entry.handler
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "registry.entry"
+      field: "handler"
+      location: "meta"
+      label: "handler"
+      edge_style: "solid"
+      category: "contract"
+
+  - name: rule.registry_entry.scanner_handler
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "registry.entry"
+      field: "scanner.handler"
+      location: "meta"
+      label: "scanner"
+      edge_style: "solid"
+      category: "contract"
+
+  - name: rule.registry_entry.providers
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "registry.entry"
+      type: "array_field"
+      field: "providers"
+      value_field: "id"
+      label_field: "provider_model"
+      location: "data"
+      edge_style: "solid"
+      category: "dependency"
+
+  - name: rule.registry_entry.driver
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "registry.entry"
+      field: "driver.id"
+      location: "data"
+      label: "driver"
+      edge_style: "solid"
+      category: "dependency"
+
+  - name: rule.registry_entry.driver_options
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "registry.entry"
+      type: "map_values"
+      field: "driver.options"
+      location: "data"
+      label_prefix: "config:"
+      edge_style: "dashed"
+      category: "env"
+
+  - name: rule.depends_on_root
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "*"
+      type: "array"
+      field: "depends_on"
+      location: "data"
+      label: "depends_on"
+      edge_style: "dashed"
+      category: "lifecycle"
