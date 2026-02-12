@@ -440,3 +440,38 @@ entries:
       label: "depends_on"
       edge_style: "dashed"
       category: "lifecycle"
+
+  - name: rule.contract_binding.contracts
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "contract.binding"
+      type: "nested"
+      field: "contracts"
+      location: "data"
+      nested_rules:
+        - type: "field"
+          field: "contract"
+          location: "data"
+          label: "contract"
+          edge_style: "solid"
+          category: "contract"
+        - type: "map_values"
+          field: "methods"
+          location: "data"
+          label_prefix: "method:"
+          edge_style: "solid"
+          category: "contract"
+
+  - name: rule.ns_requirement.default
+    kind: registry.entry
+    meta:
+      graph.rule: "true"
+    rule:
+      match_kind: "ns.requirement"
+      field: "default"
+      location: "data"
+      label: "default"
+      edge_style: "dotted"
+      category: "contract"

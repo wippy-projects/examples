@@ -8,6 +8,12 @@ local function handler()
 
     local nodes, edges = graph_builder.build_graph()
 
+    -- Deep scan: find hidden references to orphan entries
+    local extra = graph_builder.find_orphan_refs(nodes, edges)
+    for _, e in ipairs(extra) do
+        table.insert(edges, e)
+    end
+
     local entry_param = req:query("entry")
     local orphans_param = req:query("orphans")
     local kind_param = req:query("kind")

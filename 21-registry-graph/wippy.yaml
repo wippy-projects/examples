@@ -1,0 +1,10 @@
+organization: butschster
+module: registry-graph
+description: Interactive registry graph visualization with DOT rendering and edge rule engine
+license: MIT
+keywords:
+  - registry
+  - graph
+  - visualization
+  - dot
+  - introspection

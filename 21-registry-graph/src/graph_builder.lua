@@ -11,7 +11,15 @@ local function resolve_ref(ref, current_ns)
 end
 
 --- Deep get: "meta.server" → tbl.meta.server, "lifecycle.depends_on" → ...
+--- Tries flat key first (handles "scanner.handler" as literal key in meta),
+--- then falls back to segment-by-segment navigation for nested structures.
 local function deep_get(tbl, path)
+    if type(tbl) ~= "table" then return nil end
+    -- Try flat key first (e.g. meta["scanner.handler"])
+    if tbl[path] ~= nil then
+        return tbl[path]
+    end
+    -- Fall back to nested navigation (e.g. data.driver.id)
     local current = tbl
     for segment in string.gmatch(path, "[^%.]+") do
         if type(current) ~= "table" then return nil end
@@ -234,6 +242,7 @@ local KIND_COLORS: {[string]: {fill: string, border: string}} = {
     ["exec.native"]         = {fill = "#1e2430", border = "#94a3b8"},
     ["ns.definition"]       = {fill = "#1a1e33", border = "#a5b4fc"},
     ["ns.requirement"]      = {fill = "#1a1e33", border = "#c084fc"},
+    ["contract.binding"]    = {fill = "#14332e", border = "#14b8a6"},
 }
 
 local CATEGORY_COLORS = {
@@ -248,6 +257,7 @@ local CATEGORY_COLORS = {
     dependency = "#6366f1",
     contract   = "#14b8a6",
     env        = "#d97706",
+    hidden     = "#f472b6",
     views      = "#f97316",
     unknown    = "#888888",
 }
@@ -428,6 +438,148 @@ local function find_orphans(nodes, edges)
         end
     end
     return orphans, filter_edges(orphans, edges)
+end
+
+-- ── Deep scan (hidden reference discovery) ─────────────────
+
+--- Recursively walk a table collecting strings that match known entry IDs
+local function collect_refs(tbl, target_ids, found, depth)
+    depth = depth or 0
+    if depth > 10 then return end -- guard against cycles
+    if type(tbl) == "string" then
+        if target_ids[tbl] then
+            found[tbl] = true
+        end
+    elseif type(tbl) == "table" then
+        for k, v in pairs(tbl) do
+            -- skip "source" (file paths) and keys already handled by rules
+            if k ~= "source" and k ~= "kind" and k ~= "id" then
+                collect_refs(v, target_ids, found, depth + 1)
+            end
+        end
+    end
+end
+
+--- Scan source text for quoted strings matching entry IDs
+local function scan_source_text(text, target_ids, found)
+    -- Match quoted strings with colon (entry reference pattern)
+    for ref in string.gmatch(text, '"([%w_%.%-]+:[%w_%.%-]+)"') do
+        if target_ids[ref] then
+            found[ref] = true
+        end
+    end
+end
+
+--- Try to read a source file, returns content or nil
+local function try_read_source(source_path)
+    if type(source_path) ~= "string" then return nil end
+    local path = string.match(source_path, "^file://(.+)$")
+    if not path then return nil end
+    -- pcall guards against sandboxed environments without io.open
+    local ok, content = pcall(function()
+        local f = io.open(path, "r")
+        if not f then return nil end
+        local text = f:read("*a")
+        f:close()
+        return text
+    end)
+    if ok and content then return content end
+    return nil
+end
+
+--- Find hidden references to orphan entries by deep-scanning all entry data
+--- and optionally scanning Lua source files.
+--- Returns extra edges that connect existing entries to orphans.
+local function find_orphan_refs(nodes, edges)
+    -- Compute orphan set
+    local has_incoming = {}
+    for _, edge in ipairs(edges) do
+        has_incoming[edge.to] = true
+    end
+    local orphan_ids = {}
+    for id in pairs(nodes) do
+        if not has_incoming[id] then
+            orphan_ids[id] = true
+        end
+    end
+
+    -- Build existing edge set for dedup
+    local existing = {}
+    for _, edge in ipairs(edges) do
+        existing[edge.from .. "->" .. edge.to] = true
+    end
+
+    -- Get full entry data from registry
+    local snap, snap_err = registry.snapshot()
+    if snap_err then return {} end
+    local entries, entries_err = snap:entries()
+    if entries_err or not entries then return {} end
+
+    local extra = {}
+
+    for _, entry in ipairs(entries) do
+        local id = tostring(entry.id)
+        if not nodes[id] then goto continue end
+        -- Skip scanning orphans themselves — we want who references them
+        if orphan_ids[id] then goto continue end
+
+        local refs = {}
+
+        -- 1. Deep scan entry data fields for orphan ID strings
+        collect_refs(entry.data or {}, orphan_ids, refs, 0)
+        collect_refs(entry.meta or {}, orphan_ids, refs, 0)
+
+        -- 2. Scan Lua source code if available
+        if entry.data and entry.data.source then
+            local text = try_read_source(entry.data.source)
+            if text then
+                scan_source_text(text, orphan_ids, refs)
+            end
+        end
+
+        -- 3. Module-based inference: entries declaring a module likely use
+        --    the corresponding infrastructure entry (e.g. modules: [store] → store.memory)
+        if entry.data and type(entry.data.modules) == "table" then
+            local MODULE_KIND_MAP = {
+                store = "store.memory",
+            }
+            for _, mod in ipairs(entry.data.modules) do
+                local target_kind = MODULE_KIND_MAP[mod]
+                if target_kind then
+                    for orphan_id in pairs(orphan_ids) do
+                        local orphan_node = nodes[orphan_id]
+                        if orphan_node and orphan_node.kind == target_kind then
+                            refs[orphan_id] = true
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Emit edges for discovered references, labeled by target kind/meta.type
+        for ref_id in pairs(refs) do
+            local key = id .. "->" .. ref_id
+            if not existing[key] then
+                existing[key] = true
+                local target = nodes[ref_id]
+                local lbl = target and target.kind or "ref"
+                if target and target.meta and target.meta.type then
+                    lbl = target.meta.type
+                end
+                table.insert(extra, {
+                    from = id,
+                    to = ref_id,
+                    label = lbl,
+                    style = "dotted",
+                    category = "hidden",
+                })
+            end
+        end
+
+        ::continue::
+    end
+
+    return extra
 end
 
 -- ── Analytics ───────────────────────────────────────────────
@@ -654,6 +806,7 @@ return {
     filter_by_ns = filter_by_ns,
     focus_entry = focus_entry,
     find_orphans = find_orphans,
+    find_orphan_refs = find_orphan_refs,
 
     -- Analytics
     find_hubs = find_hubs,

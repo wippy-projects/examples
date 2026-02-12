@@ -246,6 +246,7 @@
         "exec.native": {fill: "#1e2430", border: "#94a3b8"},
         "ns.definition": {fill: "#1a1e33", border: "#a5b4fc"},
         "ns.requirement": {fill: "#1a1e33", border: "#c084fc"},
+        "contract.binding": {fill: "#14332e", border: "#14b8a6"},
     };
 
     var CATEGORY_COLORS = {
@@ -260,6 +261,7 @@
         dependency: "#6366f1",
         contract: "#14b8a6",
         env: "#d97706",
+        hidden: "#f472b6",
         views: "#f97316",
         unknown: "#888888",
     };

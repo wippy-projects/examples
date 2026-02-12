@@ -1,0 +1,112 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Dependencies ────────────────────────────────────────────
+  - name: dep.tui
+    kind: ns.dependency
+    component: butschster/tui
+    version: "*"
+
+  - name: dep.monitor
+    kind: ns.dependency
+    component: butschster/monitor
+    version: "*"
+
+  # ── Terminal Host ───────────────────────────────────────────
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  # ── TUI Todo Process ───────────────────────────────────────
+  - name: todo
+    kind: process.lua
+    source: file://todo.lua
+    method: main
+    meta:
+      command:
+        name: todo
+        short: Interactive TUI todo list
+    modules: [ io, time ]
+    imports:
+      app: tui:app
+      style: tui:style
+      color: tui:color
+      textinput: tui:textinput
+      list: tui:list
+      tabs: tui:tabs
+      help: tui:help
+      layout: tui:layout
+      theme: tui:theme
+
+  # ── System Monitor Process ────────────────────────────────────
+  - name: monitor
+    kind: process.lua
+    source: file://monitor.lua
+    method: main
+    meta:
+      command:
+        name: monitor
+        short: TUI system monitor dashboard
+    modules: [ io, time ]
+    imports:
+      app: tui:app
+      style: tui:style
+      color: tui:color
+      tabs: tui:tabs
+      table_view: tui:table_view
+      progress: tui:progress
+      spinner: tui:spinner
+      help: tui:help
+      layout: tui:layout
+      theme: tui:theme
+      border: tui:border
+      collector: monitor:collector
+
+  # ── Process Host (hosts background workers) ──────────────────
+  - name: processes
+    kind: process.host
+    lifecycle:
+      auto_start: true
+
+  # ── Background Worker Processes ──────────────────────────────
+  - name: worker.heartbeat
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules: [ time ]
+
+  - name: worker.metrics
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules: [ time ]
+
+  - name: worker.cleanup
+    kind: process.lua
+    source: file://worker.lua
+    method: main
+    modules: [ time ]
+
+  # ── Supervised Services ──────────────────────────────────────
+  - name: svc.heartbeat
+    kind: process.service
+    process: app:worker.heartbeat
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  - name: svc.metrics
+    kind: process.service
+    process: app:worker.metrics
+    host: app:processes
+    lifecycle:
+      auto_start: true
+
+  - name: svc.cleanup
+    kind: process.service
+    process: app:worker.cleanup
+    host: app:processes
+    lifecycle:
+      auto_start: true
