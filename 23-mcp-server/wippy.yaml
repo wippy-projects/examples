@@ -1,0 +1,7 @@
+organization: butschster
+module: 23-mcp-server
+description: Simple test app for the MCP server module — exposes example tools over stdio and HTTP
+license: MIT
+keywords:
+  - mcp
+  - test

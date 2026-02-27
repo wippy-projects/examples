@@ -1,0 +1,167 @@
+version: "1.0"
+namespace: app
+
+entries:
+  # ── Dependencies ──────────────────────────────────────
+
+  - name: dep.mcp
+    kind: ns.dependency
+    component: butschster/mcp-server
+    version: "*"
+    parameters:
+      - name: router
+        value: app:api
+
+  # ── Infrastructure ────────────────────────────────────
+
+  - name: terminal
+    kind: terminal.host
+    lifecycle:
+      auto_start: true
+
+  - name: gateway
+    kind: http.service
+    addr: ":8085"
+    lifecycle:
+      auto_start: true
+
+  - name: api
+    kind: http.router
+    meta:
+      server: app:gateway
+    prefix: /api
+
+  # ── Public tools (no scope — visible on ALL endpoints) ──
+
+  - name: echo_tool
+    kind: function.lua
+    source: file://tools/echo.lua
+    method: call
+    meta:
+      mcp.tool: true
+      mcp.name: "echo"
+      mcp.description: "Echo back the input text"
+      mcp.inputSchema:
+        type: "object"
+        properties:
+          text:
+            type: "string"
+            description: "Text to echo back"
+        required:
+          - "text"
+      mcp.annotations:
+        readOnlyHint: true
+
+  - name: add_tool
+    kind: function.lua
+    source: file://tools/add.lua
+    method: call
+    meta:
+      mcp.tool: true
+      mcp.name: "add"
+      mcp.description: "Add two numbers together"
+      mcp.inputSchema:
+        type: "object"
+        properties:
+          a:
+            type: "number"
+            description: "First number"
+          b:
+            type: "number"
+            description: "Second number"
+        required:
+          - "a"
+          - "b"
+      mcp.annotations:
+        readOnlyHint: true
+
+  - name: greet_tool
+    kind: function.lua
+    source: file://tools/greet.lua
+    method: call
+    meta:
+      mcp.tool: true
+      mcp.name: "greet"
+      mcp.description: "Greet someone by name with an optional style"
+      mcp.inputSchema:
+        type: "object"
+        properties:
+          name:
+            type: "string"
+            description: "Name to greet"
+          style:
+            type: "string"
+            description: "Greeting style (formal, casual, pirate)"
+            enum:
+              - "formal"
+              - "casual"
+              - "pirate"
+        required:
+          - "name"
+      mcp.annotations:
+        readOnlyHint: true
+
+  # ── Admin-only tools (scoped — visible only on admin endpoint) ──
+
+  - name: server_info_tool
+    kind: function.lua
+    source: file://tools/server_info.lua
+    method: call
+    meta:
+      mcp.tool: true
+      mcp.name: "server_info"
+      mcp.description: "Get server status and version information"
+      mcp.scope: "admin"
+      mcp.annotations:
+        readOnlyHint: true
+
+  - name: reset_tool
+    kind: function.lua
+    source: file://tools/reset.lua
+    method: call
+    meta:
+      mcp.tool: true
+      mcp.name: "reset"
+      mcp.description: "Reset application state (admin only)"
+      mcp.scope: "admin"
+      mcp.inputSchema:
+        type: "object"
+        properties:
+          target:
+            type: "string"
+            description: "What to reset (cache, sessions, all)"
+            enum:
+              - "cache"
+              - "sessions"
+              - "all"
+      mcp.annotations:
+        destructiveHint: true
+
+  # ── Admin MCP handler (scoped to "admin") ─────────────
+
+  - name: admin_mcp_handler
+    kind: function.lua
+    source: file://handlers/admin_mcp.lua
+    method: handler
+    modules:
+      - http
+      - json
+    imports:
+      handler: mcp:handler_lib
+      jsonrpc: mcp:jsonrpc
+
+  - name: admin_mcp_post
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: POST
+    path: /admin/mcp
+    func: app:admin_mcp_handler
+
+  - name: admin_mcp_delete
+    kind: http.endpoint
+    meta:
+      router: app:api
+    method: DELETE
+    path: /admin/mcp
+    func: app:admin_mcp_handler
